@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
-import { Quest } from './quest.entity';
-import { UserCourse } from './user-course.entity';
+import { Quest } from '../../quest/entities/quest.entity';
+import { UserCourse } from '../../user/entities/user-course.entity';
 
 @Entity('courses')
 export class Course {

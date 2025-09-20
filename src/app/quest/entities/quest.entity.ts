@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
-import { Course } from './course.entity';
+import { Course } from '../../course/entities/course.entity';
 import { QuestItem } from './quest-item.entity';
 
 @Entity('quests')

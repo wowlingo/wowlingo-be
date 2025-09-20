@@ -12,7 +12,6 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // 글로벌 파이프 설정
   app.useGlobalPipes(new ValidationPipe({
     transform: true,
     whitelist: true,
@@ -23,21 +22,11 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
 
   // Swagger 설정
+  // [TODO] JWT 추가
   const config = new DocumentBuilder()
     .setTitle('[BE] 와우링고')
     .setDescription('와우링고 인터페이스 명세서')
     .setVersion('1.0')
-    .addBearerAuth(
-      {
-        type: 'http',
-        scheme: 'bearer',
-        bearerFormat: 'JWT',
-        name: 'JWT',
-        description: 'Enter JWT token',
-        in: 'header',
-      },
-      'JWT-auth',
-    )
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

@@ -1,0 +1,95 @@
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Quest } from './entities/quest.entity';
+import { QuestItem } from './entities/quest-item.entity';
+import { QuestItemUnit } from './entities/quest-item-unit.entity';
+
+@Injectable()
+export class QuestService {
+  constructor(
+    @InjectRepository(Quest)
+    private questRepository: Repository<Quest>,
+    @InjectRepository(QuestItem)
+    private questItemRepository: Repository<QuestItem>,
+    @InjectRepository(QuestItemUnit)
+    private questItemUnitRepository: Repository<QuestItemUnit>,
+  ) {}
+
+  // Quest 관련 메서드
+  async findAllQuests(): Promise<Quest[]> {
+    return this.questRepository.find({
+      relations: ['questItems', 'course'],
+    });
+  }
+
+  async findQuestById(id: number): Promise<Quest> {
+    return this.questRepository.findOneOrFail({
+      where: { questId: id },
+      relations: ['questItems', 'course'],
+    });
+  }
+
+  async findQuestsByCourseId(courseId: number): Promise<Quest[]> {
+    return this.questRepository.find({
+      where: { courseId },
+      relations: ['questItems'],
+    });
+  }
+
+  async createQuest(questData: Partial<Quest>): Promise<Quest> {
+    const quest = this.questRepository.create(questData);
+    return this.questRepository.save(quest);
+  }
+
+  // QuestItem 관련 메서드
+  async findAllQuestItems(): Promise<QuestItem[]> {
+    return this.questItemRepository.find({
+      relations: ['quest', 'questItemUnits'],
+    });
+  }
+
+  async findQuestItemById(id: number): Promise<QuestItem> {
+    return this.questItemRepository.findOneOrFail({
+      where: { questItemId: id },
+      relations: ['quest', 'questItemUnits'],
+    });
+  }
+
+  async findQuestItemsByQuestId(questId: number): Promise<QuestItem[]> {
+    return this.questItemRepository.find({
+      where: { questId },
+      relations: ['questItemUnits'],
+    });
+  }
+
+  async createQuestItem(questItemData: Partial<QuestItem>): Promise<QuestItem> {
+    const questItem = this.questItemRepository.create(questItemData);
+    return this.questItemRepository.save(questItem);
+  }
+
+  // QuestItemUnit 관련 메서드
+  async findAllQuestItemUnits(): Promise<QuestItemUnit[]> {
+    return this.questItemUnitRepository.find({
+      relations: ['questItem'],
+    });
+  }
+
+  async findQuestItemUnitById(id: number): Promise<QuestItemUnit> {
+    return this.questItemUnitRepository.findOneOrFail({
+      where: { questItemUnitId: id },
+      relations: ['questItem'],
+    });
+  }
+
+  async findQuestItemUnitsByQuestItemId(questItemId: number): Promise<QuestItemUnit[]> {
+    return this.questItemUnitRepository.find({
+      where: { questItemId },
+    });
+  }
+
+  async createQuestItemUnit(questItemUnitData: Partial<QuestItemUnit>): Promise<QuestItemUnit> {
+    const questItemUnit = this.questItemUnitRepository.create(questItemUnitData);
+    return this.questItemUnitRepository.save(questItemUnit);
+  }
+}
