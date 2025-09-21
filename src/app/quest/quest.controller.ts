@@ -5,6 +5,7 @@ import { Quest } from './entities/quest.entity';
 import { QuestItem } from './entities/quest-item.entity';
 import { QuestItemUnit } from './entities/quest-item-unit.entity';
 import { BaseResponse } from '../../common/dto/base-response.dto';
+import { QuestDataDto } from './dto/quest-data.dto'
 
 @ApiTags('Quests')
 @Controller('quests')
@@ -31,8 +32,8 @@ export class QuestController {
   @Get(':id')
   @ApiOperation({ summary: '특정 퀘스트 조회' })
   @ApiResponse({ status: 200, description: '퀘스트 조회 성공' })
-  async findQuestById(@Param('id', ParseIntPipe) id: number): Promise<BaseResponse<Quest>> {
-    const quest = await this.questService.findQuestById(id);
+  async findQuestById(@Param('id', ParseIntPipe) id: number): Promise<BaseResponse<QuestDataDto>> {
+    const quest = await this.questService.findQuestDataById(id);
     return BaseResponse.success(quest, '퀘스트 정보를 성공적으로 조회했습니다.');
   }
 
