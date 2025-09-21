@@ -16,37 +16,40 @@ export class QuestItem {
   @Column({ name: 'has_answer', type: 'boolean', default: false, comment: '답변 여부' })
   hasAnswer: boolean;
 
-  @Column({ name: 'question1', type: 'text', nullable: true })
-  question1: string;
+  @Column({ name: 'question1', type: 'bigint', nullable: true })
+  question1: number;
 
-  @Column({ name: 'question2', type: 'text', nullable: true })
-  question2: string;
+  @Column({ name: 'question2', type: 'bigint', nullable: true })
+  question2: number;
 
-  @Column({ name: 'question3', type: 'text', nullable: true })
-  question3: string;
+  @Column({ name: 'question3', type: 'bigint', nullable: true })
+  question3: number;
 
   @Column({ name: 'answer_ox', type: 'varchar', length: 1, nullable: true, comment: 'O/X 답변' })
   answerOx: string;
 
-  @Column({ name: 'answer1', type: 'text', nullable: true })
-  answer1: string;
+  @Column({ name: 'answer_sq', type: 'varchar', length: 10, nullable: true, comment: '평서문/의문문 답변' })
+  answerSq: string;
 
-  @Column({ name: 'answer2', type: 'text', nullable: true })
-  answer2: string;
+  @Column({ name: 'answer1', type: 'bigint', nullable: true })
+  answer1: number;
 
-  @Column({ name: 'answer3', type: 'text', nullable: true })
-  answer3: string;
+  @Column({ name: 'answer2', type: 'bigint', nullable: true })
+  answer2: number;
 
-  @Column({ name: 'answer4', type: 'text', nullable: true })
-  answer4: string;
+  @Column({ name: 'answer3', type: 'bigint', nullable: true })
+  answer3: number;
 
-  @Column({ name: 'answer5', type: 'text', nullable: true })
-  answer5: string;
+  @Column({ name: 'answer4', type: 'bigint', nullable: true })
+  answer4: number;
+
+  @Column({ name: 'answer5', type: 'bigint', nullable: true })
+  answer5: number;
 
   @ManyToOne(() => Quest, quest => quest.questItems)
   @JoinColumn({ name: 'quest_id' })
   quest: Quest;
 
-  @OneToMany(() => QuestItemUnit, questItemUnit => questItemUnit.questItem)
-  questItemUnits: QuestItemUnit[];
+  // @OneToMany(() => QuestItemUnit, questItemUnit => questItemUnit.questItem)
+  // questItemUnits: QuestItemUnit[];
 }

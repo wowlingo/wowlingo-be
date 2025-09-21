@@ -3,9 +3,9 @@
     "version": "2.2.11",
     "width": 2000,
     "height": 2000,
-    "scrollTop": -24,
-    "scrollLeft": -560,
-    "zoomLevel": 0.9,
+    "scrollTop": -960,
+    "scrollLeft": 0,
+    "zoomLevel": 1,
     "show": {
       "tableComment": true,
       "columnComment": true,
@@ -281,7 +281,7 @@
           "active": false,
           "left": 177.6668,
           "top": 43.667,
-          "zIndex": 1596,
+          "zIndex": 10,
           "widthName": 60,
           "widthComment": 60
         },
@@ -383,13 +383,59 @@
               "widthDefault": 60
             },
             "id": "3bf557c3-4745-4c65-b0b7-86a2b1b32113"
+          },
+          {
+            "name": "title",
+            "comment": "문제집 타이틀",
+            "dataType": "",
+            "default": "",
+            "option": {
+              "autoIncrement": false,
+              "primaryKey": false,
+              "unique": false,
+              "notNull": false
+            },
+            "ui": {
+              "active": false,
+              "pk": false,
+              "fk": false,
+              "pfk": false,
+              "widthName": 60,
+              "widthComment": 72.88896179199219,
+              "widthDataType": 60,
+              "widthDefault": 60
+            },
+            "id": "670815ff-fcc5-47a4-ba06-3df13407704e"
+          },
+          {
+            "name": "type",
+            "comment": "문제집 타입",
+            "dataType": "",
+            "default": "",
+            "option": {
+              "autoIncrement": false,
+              "primaryKey": false,
+              "unique": false,
+              "notNull": false
+            },
+            "ui": {
+              "active": false,
+              "pk": false,
+              "fk": false,
+              "pfk": false,
+              "widthName": 60,
+              "widthComment": 61.64396667480469,
+              "widthDataType": 60,
+              "widthDefault": 60
+            },
+            "id": "5ad15dc2-141f-453c-acdc-b5aa4f239801"
           }
         ],
         "ui": {
           "active": false,
           "left": 132.7779,
           "top": 434.2223,
-          "zIndex": 1598,
+          "zIndex": 23,
           "widthName": 60,
           "widthComment": 60
         },
@@ -585,6 +631,29 @@
             "id": "2a1eb94a-cdfe-41d6-974b-10be1e67da72"
           },
           {
+            "name": "answer_sq",
+            "comment": "정답 평서문/의문문",
+            "dataType": "VARCHAR(10)",
+            "default": "",
+            "option": {
+              "autoIncrement": false,
+              "primaryKey": false,
+              "unique": false,
+              "notNull": false
+            },
+            "ui": {
+              "active": false,
+              "pk": false,
+              "fk": false,
+              "pfk": false,
+              "widthName": 60,
+              "widthComment": 99.77294921875,
+              "widthDataType": 77.72488403320312,
+              "widthDefault": 60
+            },
+            "id": "44f63b69-6b6b-4589-af25-acccb1152a25"
+          },
+          {
             "name": "answer1",
             "comment": "정답1 (quest_item_unit_id)",
             "dataType": "BIGINT",
@@ -698,13 +767,36 @@
               "widthDefault": 60
             },
             "id": "81ce2ddf-ec44-4c8c-a2f7-89f606ed494f"
+          },
+          {
+            "name": "quest_item_unit_id",
+            "comment": "\bquestion, answer 에 해당 id 가 들어간다.",
+            "dataType": "",
+            "default": "",
+            "option": {
+              "autoIncrement": false,
+              "primaryKey": false,
+              "unique": false,
+              "notNull": true
+            },
+            "ui": {
+              "active": false,
+              "pk": false,
+              "fk": true,
+              "pfk": false,
+              "widthName": 101.31986999511719,
+              "widthComment": 120,
+              "widthDataType": 60,
+              "widthDefault": 60
+            },
+            "id": "63a64db5-8c2a-41be-9ccb-3f180aceac69"
           }
         ],
         "ui": {
           "active": false,
-          "left": 135.6664,
-          "top": 678.7775,
-          "zIndex": 1511,
+          "left": 130.6664,
+          "top": 771.7775,
+          "zIndex": 55,
           "widthName": 66.58392333984375,
           "widthComment": 60
         },
@@ -812,7 +904,7 @@
           "active": false,
           "left": 784.4718,
           "top": 86.7223,
-          "zIndex": 1380,
+          "zIndex": 2,
           "widthName": 60,
           "widthComment": 60
         },
@@ -845,29 +937,6 @@
               "widthDefault": 60
             },
             "id": "27d20d65-ddc3-41c9-b491-6734f24f9ea2"
-          },
-          {
-            "name": "quest_item_id",
-            "comment": "auto_increment",
-            "dataType": "BIGINT",
-            "default": "",
-            "option": {
-              "autoIncrement": false,
-              "primaryKey": false,
-              "unique": false,
-              "notNull": true
-            },
-            "ui": {
-              "active": false,
-              "pk": false,
-              "fk": true,
-              "pfk": false,
-              "widthName": 75.59291076660156,
-              "widthComment": 86.10987854003906,
-              "widthDataType": 60,
-              "widthDefault": 60
-            },
-            "id": "2be709b9-bda0-4f4d-a7b9-a7f7df72afd3"
           },
           {
             "name": "type",
@@ -987,9 +1056,9 @@
         ],
         "ui": {
           "active": false,
-          "left": 32.2226,
-          "top": 1160.3337,
-          "zIndex": 1331,
+          "left": 0,
+          "top": 1259.3337,
+          "zIndex": 48,
           "widthName": 92.31088256835938,
           "widthComment": 60
         },
@@ -1143,7 +1212,7 @@
           "active": false,
           "left": 773.5279,
           "top": 386.3611,
-          "zIndex": 1386,
+          "zIndex": 3,
           "widthName": 71.12091064453125,
           "widthComment": 87.55294799804688
         },
@@ -1389,7 +1458,7 @@
           "active": false,
           "left": 727.6109,
           "top": 749.6109,
-          "zIndex": 1518,
+          "zIndex": 6,
           "widthName": 65.42692565917969,
           "widthComment": 98.79794311523438
         },
@@ -1612,7 +1681,7 @@
           "active": false,
           "left": 746.8888,
           "top": 1199.1941,
-          "zIndex": 1533,
+          "zIndex": 7,
           "widthName": 94.23489379882812,
           "widthComment": 87.55294799804688
         },
@@ -1743,7 +1812,7 @@
           "active": false,
           "left": 1306.8885,
           "top": 77.5557,
-          "zIndex": 1599,
+          "zIndex": 12,
           "widthName": 113.6048583984375,
           "widthComment": 113.46192932128906
         },
@@ -1851,7 +1920,7 @@
           "active": false,
           "left": 1309.1115,
           "top": 397.8884,
-          "zIndex": 1508,
+          "zIndex": 4,
           "widthName": 60,
           "widthComment": 60
         },
@@ -1866,7 +1935,7 @@
           "active": false,
           "left": 1315.3438,
           "top": 761,
-          "zIndex": 1549,
+          "zIndex": 8,
           "widthName": 60,
           "widthComment": 60
         },
@@ -1881,7 +1950,7 @@
           "active": false,
           "left": 1314.3438,
           "top": 845,
-          "zIndex": 1559,
+          "zIndex": 9,
           "widthName": 61.64396667480469,
           "widthComment": 60
         },
@@ -1932,7 +2001,7 @@
             "9c523899-501c-4156-bc43-76dc88a5c5a5"
           ],
           "x": 349.8857948974609,
-          "y": 585.2223,
+          "y": 626.2223,
           "direction": "bottom"
         },
         "end": {
@@ -1940,39 +2009,13 @@
           "columnIds": [
             "c349c096-f71d-430e-a965-10be744e8675"
           ],
-          "x": 355.82529739990235,
-          "y": 678.7775,
+          "x": 363.68877701416017,
+          "y": 771.7775,
           "direction": "top"
         },
         "constraintName": "fk_quests_to_quest_items",
         "visible": true,
         "id": "5b8626bf-c168-4435-985f-e82063957999"
-      },
-      {
-        "identification": false,
-        "relationshipType": "OneN",
-        "startRelationshipType": "Dash",
-        "start": {
-          "tableId": "ffdd63b0-fd09-4df2-a5a3-648d56aa57fc",
-          "columnIds": [
-            "65b4d974-1ef4-4c53-81b8-ad90514a649b"
-          ],
-          "x": 245.74584869995118,
-          "y": 1014.2775,
-          "direction": "bottom"
-        },
-        "end": {
-          "tableId": "68f0fcbb-df48-478b-b253-6d15758cd0d0",
-          "columnIds": [
-            "2be709b9-bda0-4f4d-a7b9-a7f7df72afd3"
-          ],
-          "x": 256.3825349975586,
-          "y": 1160.3337,
-          "direction": "top"
-        },
-        "constraintName": "fk_quest_items_to_quest_item_units",
-        "visible": true,
-        "id": "558c07ac-c3b9-4b80-bf31-663e9ecd4b81"
       },
       {
         "identification": false,
@@ -2114,7 +2157,7 @@
             "9c523899-501c-4156-bc43-76dc88a5c5a5"
           ],
           "x": 566.9936897949219,
-          "y": 509.7223,
+          "y": 530.2223,
           "direction": "right"
         },
         "end": {
@@ -2139,9 +2182,9 @@
           "columnIds": [
             "65b4d974-1ef4-4c53-81b8-ad90514a649b"
           ],
-          "x": 465.9047460998535,
-          "y": 1014.2775,
-          "direction": "bottom"
+          "x": 596.7111540283204,
+          "y": 960.0275,
+          "direction": "right"
         },
         "end": {
           "tableId": "185d2c1d-40cd-4123-96de-fc16a2c336a6",
@@ -2181,6 +2224,32 @@
         "constraintName": "fk_user_quest_attempts_to_ai 피드백",
         "visible": true,
         "id": "a9581b1f-e06d-4199-b2f5-63327e938447"
+      },
+      {
+        "identification": false,
+        "relationshipType": "ZeroN",
+        "startRelationshipType": "Dash",
+        "start": {
+          "tableId": "68f0fcbb-df48-478b-b253-6d15758cd0d0",
+          "columnIds": [
+            "27d20d65-ddc3-41c9-b491-6734f24f9ea2"
+          ],
+          "x": 224.1599349975586,
+          "y": 1259.3337,
+          "direction": "top"
+        },
+        "end": {
+          "tableId": "ffdd63b0-fd09-4df2-a5a3-648d56aa57fc",
+          "columnIds": [
+            "63a64db5-8c2a-41be-9ccb-3f180aceac69"
+          ],
+          "x": 363.68877701416017,
+          "y": 1148.2775000000001,
+          "direction": "bottom"
+        },
+        "constraintName": "fk_quest_item_units_to_quest_items",
+        "visible": true,
+        "id": "6bea7236-90aa-464e-9a45-c79c2d328b5c"
       }
     ]
   }
