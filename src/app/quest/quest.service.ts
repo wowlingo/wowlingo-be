@@ -35,13 +35,24 @@ export class QuestService {
     questDataDto.title = quest.title;
     questDataDto.type = quest.type;
 
-    const questUnitIds = quest.questItems
+    // TODO:: 사용자가 풀었던 문제 중 오답인 문제는 제외.
+
+    // 문제를 섞고
+    for (let i = quest.questItems.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [quest.questItems[i], quest.questItems[j]] = [quest.questItems[j], quest.questItems[i]];
+    }
+
+    // 문제 5개 추출. 
+    const randomQuestItems = quest.questItems.slice(0, quest.questItemCount);
+
+    const questUnitIds = randomQuestItems
       .flatMap(item => [item.question1, item.question2, item.question3])
       .filter(id => id);
     const questUnits = await this.questItemUnitRepository.findBy({ questItemUnitId: In(questUnitIds) });
     const questUnitMap = new Map(questUnits.map(unit => [unit.questItemUnitId, unit]));
 
-    questDataDto.items = quest.questItems.map(item => {
+    questDataDto.items = randomQuestItems.map(item => {
       const questItemDataDto = new QuestItemDataDto();
 
       const units = [item.question1, item.question2, item.question3]
