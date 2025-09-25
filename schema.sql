@@ -67,3 +67,17 @@ CREATE TABLE IF NOT EXISTS `user` (
   PRIMARY KEY (`user_id`)
 ) ENGINE = InnoDB;
 
+CREATE TABLE IF NOT EXISTS user_quest_items
+(
+  user_quest_item_id BIGINT   NOT NULL AUTO_INCREMENT,
+  user_quest_id      BIGINT   NOT NULL COMMENT '사용자 학습 문제집 Id',
+  quest_item_id      BIGINT   NOT NULL COMMENT '문제 항목 Id',
+  user_answer_ox     VARCHAR(1)   NULL     COMMENT '사용자 답변 ox',
+  user_answer_sq     VARCHAR(10)  NULL     COMMENT '사용자 답변 평서문/의문문',
+  user_answer        BIGINT   NULL     COMMENT '사용자 답변  (quest_item_unit_id)',
+  correct_yn         boolean    NULL     COMMENT '정답 여부',
+  attempt_at         DATETIME NULL     COMMENT '학습 시도 시간',
+  time_spent         INT      NULL     COMMENT '소요 시간 (초)',
+  quest_item         JSON     NULL     COMMENT '문제(json)',
+  PRIMARY KEY (user_quest_item_id)
+) COMMENT '사용자 학습 문제';

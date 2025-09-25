@@ -1,6 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 import { User } from './user.entity';
 import { Course } from '../../course/entities/course.entity';
+import { UserQuest } from '../../user-quest/entities/user-quest.entity'
 
 @Entity('user_courses')
 export class UserCourse {
@@ -13,8 +14,8 @@ export class UserCourse {
   @Column({ name: 'course_id', type: 'bigint' })
   courseId: number;
 
-  @Column({ name: 'done_yn', type: 'varchar', length: 1, default: 'N', comment: '완료 여부' })
-  doneYn: string;
+  @Column({ name: 'done_yn', type: 'boolean', default: false, comment: '완료 여부' })
+  doneYn: boolean;
 
   @Column({ name: 'started_at', type: 'datetime', nullable: true, comment: '시작일시' })
   startedAt: Date;
@@ -32,4 +33,7 @@ export class UserCourse {
   @ManyToOne(() => Course, course => course.userCourses)
   @JoinColumn({ name: 'course_id' })
   course: Course;
+
+  @OneToMany(() => UserQuest, userQuest => userQuest.userCourse)
+  userQuests: UserQuest[];
 }
