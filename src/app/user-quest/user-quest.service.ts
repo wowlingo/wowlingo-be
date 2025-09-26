@@ -61,6 +61,31 @@ export class UserQuestService {
         return savedUserQuestItem;
     }
 
+    async getUserQuest(
+        userId: number, courseId: number, questId: number
+    ): Promise<UserQuest | null> {
+        const userQuest = await this.userQuestRepository.findOne({
+            relations: {
+                userQuestItems: false,
+            },
+            // 2. 중첩된 where 절로 JOIN 조건을 구현합니다.
+            where: {
+                questId: questId,
+                userCourse: {
+                    userId: userId,
+                    courseId: courseId,
+                },
+            },
+        });
+
+        if (!userQuest) {
+            console.log('사용자 학습 문제를 찾을 수 없습니다.');
+            return null;
+        }
+
+        return userQuest;
+    }
+
     private async findOrCreateUserCourse(userId: number, courseId: number): Promise<UserCourse> {
         let userCourse = await this.userCourseRepository.findOneBy({ userId, courseId });
         if (!userCourse) {
@@ -84,6 +109,8 @@ export class UserQuestService {
     private async findOrCreateUserQuest(userCourse: UserCourse, questId: number) {
         // TODO:: 첫 문제 풀기 인가? = 문제 Dto의 seq = 0 이면! 
         // 문제 Dto의 seq != 0 인데 userQuest 가 없다? 에러!
+        // create query
+        // query builder
         let userQuest = await this.userQuestRepository.findOne({
             where: { userCourseId: userCourse.userCourseId, questId },
             relations: ['userQuestItems']

@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Param, Body, ParseIntPipe, Query, NotFoundException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { BaseResponse } from '../../common/dto/base-response.dto';
+import { UserQuest } from './entities/user-quest.entity';
 import { UserQuestItem } from './entities/user-quest-item.entity';
 import { UserQuestItemDto } from './dto/user-quest-item.dto'
 import { UserQuestService } from './user-quest.service'
@@ -32,5 +33,27 @@ export class UserQuestController {
 
         return BaseResponse.success(questItem, '퀘스트 아이템이 성공적으로 저장되었습니다.');
     }
+
+    @Get(':userId/:courseId/:questId')
+    @ApiOperation({ summary: '사용자 퀘스트 조회' })
+    @ApiResponse({ status: 201, description: '사용자 퀘스트 아이템 생성 성공' })
+    async getUserQuest(
+        @Param('userId', ParseIntPipe) userId: number,
+        @Param('courseId', ParseIntPipe) courseId: number,
+        @Param('questId', ParseIntPipe) questId: number)
+        : Promise<BaseResponse<UserQuest>> {
+        const quest = await this.userQuestService.getUserQuest(
+            userId,
+            courseId,
+            questId
+        );
+        if (!quest) {
+            // null이면, "찾을 수 없음" 예외를 발생시켜 404 에러를 반환
+            throw new NotFoundException('해당 퀘스트를 찾을 수 없습니다.');
+        }
+
+        return BaseResponse.success(quest, '퀘스트 조회 성공.');
+    }
+
 
 }
