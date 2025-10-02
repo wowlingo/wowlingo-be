@@ -8,7 +8,7 @@ async function bootstrap() {
 
   // CORS 설정
   app.enableCors({
-    origin: 'http://localhost:18090', // 프론트엔드 URL
+    origin: ['http://localhost:5173', 'http://localhost:18090'], // 프론트엔드 URL들
     credentials: true,
   });
 

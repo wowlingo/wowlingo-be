@@ -5,6 +5,11 @@ import { Quest } from './entities/quest.entity';
 import { QuestItem } from './entities/quest-item.entity';
 import { QuestItemUnit } from './entities/quest-item-unit.entity';
 import { BaseResponse } from '../../common/dto/base-response.dto';
+import { 
+  SentenceTestRequestDto, 
+  CheckAnswerRequestDto, 
+  AddToWrongNotesRequestDto 
+} from './dto/sentence-test.dto';
 
 @ApiTags('Quests')
 @Controller('quests')
@@ -108,5 +113,30 @@ export class QuestController {
   async createQuestItemUnit(@Body() questItemUnitData: Partial<QuestItemUnit>): Promise<BaseResponse<QuestItemUnit>> {
     const questItemUnit = await this.questService.createQuestItemUnit(questItemUnitData);
     return BaseResponse.success(questItemUnit, '퀘스트 아이템 유닛이 성공적으로 생성되었습니다.');
+  }
+
+  // 문장 검사 관련 엔드포인트
+  @Post('sentence-test')
+  @ApiOperation({ summary: '문장 검사 데이터 조회' })
+  @ApiResponse({ status: 200, description: '문장 검사 데이터 조회 성공' })
+  async getSentenceTest(@Body() requestDto: SentenceTestRequestDto): Promise<BaseResponse<any>> {
+    const sentenceTest = await this.questService.getSentenceTest(requestDto.questId);
+    return BaseResponse.success(sentenceTest, '문장 검사 데이터를 성공적으로 조회했습니다.');
+  }
+
+  @Post('sentence-test/check-answer')
+  @ApiOperation({ summary: '문장 검사 정답 확인' })
+  @ApiResponse({ status: 200, description: '정답 확인 성공' })
+  async checkSentenceAnswer(@Body() checkAnswerDto: CheckAnswerRequestDto): Promise<BaseResponse<any>> {
+    const result = await this.questService.checkSentenceAnswer(checkAnswerDto);
+    return BaseResponse.success(result, '정답을 성공적으로 확인했습니다.');
+  }
+
+  @Post('sentence-test/wrong-notes')
+  @ApiOperation({ summary: '오답 노트에 추가' })
+  @ApiResponse({ status: 201, description: '오답 노트 추가 성공' })
+  async addToWrongNotes(@Body() addToWrongNotesDto: AddToWrongNotesRequestDto): Promise<BaseResponse<void>> {
+    await this.questService.addToWrongNotes(addToWrongNotesDto);
+    return BaseResponse.success(undefined, '오답 노트에 성공적으로 추가했습니다.');
   }
 }
