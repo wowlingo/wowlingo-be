@@ -17,6 +17,8 @@ export class UserCourse {
   @Column({ name: 'done_yn', type: 'boolean', default: false, comment: '완료 여부' })
   doneYn: boolean;
 
+  // TODO:: 사용자가 접근 가능한가? enableYn
+
   @Column({ name: 'started_at', type: 'datetime', nullable: true, comment: '시작일시' })
   startedAt: Date;
 

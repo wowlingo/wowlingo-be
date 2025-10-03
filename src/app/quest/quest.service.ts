@@ -65,7 +65,12 @@ export class QuestService {
           return [{
             id: unit.questItemUnitId,
             url: unit.urlNormal,
-            type: unit.type,
+            type: 'normal',
+          },
+          {
+            id: unit.questItemUnitId,
+            url: unit.urlSlow,
+            type: 'slow',
           }];
         });
 

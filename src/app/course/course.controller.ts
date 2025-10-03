@@ -1,28 +1,37 @@
 import { Controller, Get, Post, Put, Delete, Param, Body, ParseIntPipe, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { CourseService } from './course.service';
+import { UserService } from '../user/user.service';
 import { Course } from './entities/course.entity';
 import { BaseResponse } from '../../common/dto/base-response.dto';
+import { CourseDataDto } from './dto/course-data.dto';
 
 @ApiTags('Courses')
 @Controller('courses')
 export class CourseController {
-  constructor(private readonly courseService: CourseService) {}
+  constructor(
+    private readonly courseService: CourseService,
+    private readonly userService: UserService
+  ) {}
 
   @Get()
   @ApiOperation({ summary: '모든 코스 조회' })
   @ApiQuery({ name: 'type', required: false, description: '코스 타입 필터' })
   @ApiResponse({ status: 200, description: '코스 목록 조회 성공' })
   async findAll(
-    @Query('type') type?: string,
-  ): Promise<BaseResponse<Course[]>> {
-    let courses: Course[];
+    // @Query('type') type?: string,
+    @Query('userId', ParseIntPipe) userId: number,
+  ): Promise<BaseResponse<CourseDataDto[]>> {
+    let courses: CourseDataDto[];
     
-    if (type) {
-      courses = await this.courseService.findByType(type);
-    } else {
-      courses = await this.courseService.findAll();
-    }
+    const userCourses = await this.userService.getUserCourses(userId);
+    courses = await this.courseService.getCourseListByUserId(userId, userCourses);
+
+    // if (type) {
+    //   courses = await this.courseService.findByType(type);
+    // } else {
+    //   courses = await this.courseService.findAll();
+    // }
     
     return BaseResponse.success(courses, '코스 목록을 성공적으로 조회했습니다.');
   }
