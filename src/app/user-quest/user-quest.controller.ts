@@ -1,15 +1,23 @@
-import { Controller, Get, Post, Param, Body, ParseIntPipe, Query, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, ParseIntPipe, Query, NotFoundException, ParseArrayPipe } from '@nestjs/common';
+import { ParseDatePipe } from 'src/common/pipes/parse-date.pipe';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { BaseResponse } from '../../common/dto/base-response.dto';
 import { UserQuest } from './entities/user-quest.entity';
 import { UserQuestItem } from './entities/user-quest-item.entity';
 import { UserQuestItemDto } from './dto/user-quest-item.dto'
 import { UserQuestService } from './user-quest.service'
+import { Any } from 'typeorm';
+import { HashtagService } from '../hashtag/hashtag.service';
+import { Hashtag } from '../hashtag/entities/hashtag.entity';
+import { QuestItemUnit } from '../quest/entities/quest-item-unit.entity';
 
 @ApiTags('UserQuests')
 @Controller('user-quests')
 export class UserQuestController {
-    constructor(private readonly userQuestService: UserQuestService) { }
+    constructor(
+        private readonly userQuestService: UserQuestService,
+        private readonly hashtagService: HashtagService
+    ) { }
 
     @Post(':userId/:courseId/:questId/item')
     @ApiOperation({ summary: '사용자 퀘스트 아이템 생성' })
@@ -55,5 +63,38 @@ export class UserQuestController {
         return BaseResponse.success(quest, '퀘스트 조회 성공.');
     }
 
+
+    // 오답노트
+    // 해시태그 조회 (by date)
+    @Get('/review-notes/hashtags')
+    @ApiOperation({ summary: '사용자 오답노트 해시태그 조회' })
+    @ApiResponse({ status: 201, description: '사용자 오답노트 해시태그 조회 성공' })
+    async getReviewNoteHashtags(
+        @Query('userId', ParseIntPipe) userId: number,
+        @Query('date', ParseDatePipe) date: Date
+    ): Promise<BaseResponse<Hashtag[]>> {
+        const questItemUnits = await this.userQuestService.getQuestItemsByCorrectYnAndAttemptAt(userId, false, date);
+        const ids = questItemUnits.flatMap(it => [it.question1, it.question2, it.question3]).filter(Boolean);
+        const hashtags = await this.hashtagService.findAllByQuestItemUnitIds(ids);
+
+        return BaseResponse.success(hashtags, '해시태그 조회 성공.');
+    }
+
+    // 틀린 문제 목록 조회 (by date, tags)
+    @Get('/review-notes')
+    @ApiOperation({ summary: '사용자 오답노트 조회' })
+    @ApiQuery({
+        name: 'hashtags', required: false, description: '해쉬태그 id'
+    })
+    @ApiResponse({ status: 201, description: '사용자 오답노트 조회 성공' })
+    async getReviewNotes(
+        @Query('userId', ParseIntPipe) userId: number,
+        @Query('date', ParseDatePipe) date: Date,
+        @Query('hashtags', new ParseArrayPipe({ items: Number, optional: true })) hashtagIds: number[] = []
+    ): Promise<BaseResponse<QuestItemUnit[]>> {
+        const questItemUnits = await this.userQuestService.getQuestItemUnitsByCorrectYnAndAttemptAtAndHashtags(userId, false, date, hashtagIds);
+
+        return BaseResponse.success(questItemUnits, '오답노트 조회 성공.');
+    }
 
 }

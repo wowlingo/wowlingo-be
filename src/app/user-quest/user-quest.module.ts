@@ -6,11 +6,16 @@ import { UserQuest } from './entities/user-quest.entity';
 import { UserQuestItem } from './entities/user-quest-item.entity';
 import { Quest } from '../quest/entities/quest.entity';
 import { QuestItem } from '../quest/entities/quest-item.entity';
+import { QuestItemUnit } from '../quest/entities/quest-item-unit.entity'
 import { UserCourse } from '../user/entities/user-course.entity';
+import { HashtagModule } from '../hashtag/hashtag.module';
 
 
 @Module({
-    imports: [TypeOrmModule.forFeature([UserQuest, UserQuestItem, Quest, QuestItem, UserCourse])],
+    imports: [
+        TypeOrmModule.forFeature([UserQuest, UserQuestItem, Quest, QuestItem, QuestItemUnit, UserCourse]),
+        HashtagModule,
+    ],
     controllers: [UserQuestController],
     providers: [UserQuestService],
 })

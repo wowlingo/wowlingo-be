@@ -5,6 +5,7 @@ import { UserQuestItem } from './entities/user-quest-item.entity';
 import { UserQuestItemDto } from './dto/user-quest-item.dto';
 import { Quest } from '../quest/entities/quest.entity'
 import { QuestItem } from '../quest/entities/quest-item.entity'
+import { QuestItemUnit } from '../quest/entities/quest-item-unit.entity'
 import { UserCourse } from '../user/entities/user-course.entity'
 import { UserQuest } from './entities/user-quest.entity'
 import { min } from 'class-validator';
@@ -23,6 +24,8 @@ export class UserQuestService {
         private questItemRepository: Repository<QuestItem>,
         @InjectRepository(Quest)
         private questRepository: Repository<Quest>,
+        @InjectRepository(QuestItemUnit)
+        private questItemUnitRepository: Repository<QuestItemUnit>,
     ) { }
 
     async createUserQuestItem(
@@ -186,5 +189,43 @@ export class UserQuestService {
                 accuracyRate: accuracyRate,
             }); // save?
         }
+    }
+
+    async getQuestItemsByCorrectYnAndAttemptAt(userId: number, correctYn: boolean, date: Date): Promise<QuestItem[]> {
+        const startDate = new Date(date);
+        startDate.setHours(0, 0, 0, 0);
+        const endDate = new Date(date);
+        endDate.setHours(23, 59, 59, 999);
+
+        return this.questItemRepository.createQueryBuilder('qi')
+            .innerJoin('user_quest_items', 'uqi', 'uqi.quest_item_id = qi.quest_item_id')
+            .innerJoin('user_quests', 'uq', 'uq.user_quest_id = uqi.user_quest_id')
+            .where('uq.userId = :userId', { userId })
+            .andWhere('uqi.correctYn = :correctYn', { correctYn })
+            .andWhere('uqi.attempt_at BETWEEN :startDate AND :endDate', { startDate, endDate })
+            .getMany();
+    }
+
+    async getQuestItemUnitsByCorrectYnAndAttemptAtAndHashtags(userId: number, correctYn: boolean, date: Date, hashtagIds: number[]) {
+        const startDate = new Date(date);
+        startDate.setHours(0, 0, 0, 0);
+        const endDate = new Date(date);
+        endDate.setHours(23, 59, 59, 999);
+
+        let query = this.questItemUnitRepository
+            .createQueryBuilder('qiu')
+            .distinct(true)
+            .innerJoin('quest_items', 'qi', 'qiu.quest_item_unit_id IN (qi.question1, qi.question2, qi.question3)')
+            .leftJoin('quest_item_unit_hashtags', 'qiuh', 'qiuh.quest_item_unit_id IN(qi.question1, qi.question2, qi.question3)')
+            .innerJoin('user_quest_items', 'uqi', 'uqi.quest_item_id = qi.quest_item_id')
+            .innerJoin('user_quests', 'uq', 'uq.user_quest_id = uqi.user_quest_id')
+            .where('uq.userId = :userId', { userId })
+            .andWhere('uqi.correctYn = :correctYn', { correctYn })
+            .andWhere('uqi.attempt_at BETWEEN :startDate AND :endDate', { startDate, endDate })
+
+        if (hashtagIds && hashtagIds.length > 0)
+            query.andWhere('qiuh.hashtag_id IN (:...hashtagIds)', { hashtagIds });
+
+        return query.getMany();
     }
 }

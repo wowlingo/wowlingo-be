@@ -10,6 +10,9 @@ export class UserQuest {
     @Column({ name: 'user_course_id', type: 'bigint' })
     userCourseId: number;
 
+    @Column({ name: 'user_id', type: 'bigint' })
+    userId: number;
+
     @Column({ name: 'quest_id', type: 'bigint' })
     questId: number;
 

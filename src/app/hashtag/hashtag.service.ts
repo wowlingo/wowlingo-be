@@ -32,4 +32,17 @@ export class HashtagService {
             .where('v.user_id = :userId', { userId })
             .getMany();
     }
+
+    async findAllByQuestItemUnitIds(ids: number[]) {
+        if (!ids || ids.length === 0) {
+            return [];
+        }
+
+        return this.hashtagRepository
+            .createQueryBuilder('h')
+            .distinct(true)
+            .innerJoin('quest_item_unit_hashtags', 'qiuh', 'qiuh.hashtag_id = h.hashtag_id')
+            .where('qiuh.quest_item_unit_id IN (:...ids)', { ids })
+            .getMany();
+    }
 }
