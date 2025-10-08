@@ -18,6 +18,8 @@ import { Hashtag } from '../../app/hashtag/entities/hashtag.entity';
 import { QuestHashtag } from '../../app/hashtag/entities/quest-hashtag.entity';
 import { QuestItemUnitHashtag } from '../../app/hashtag/entities/quest-item-unit-hashtag.entity';
 
+import { UserQuestAttempt } from '../../app/user/entities/user-quest-attempt.entity';
+
 @Module({
   imports: [
     TypeOrmModule.forRootAsync({
@@ -43,6 +45,7 @@ import { QuestItemUnitHashtag } from '../../app/hashtag/entities/quest-item-unit
           UserQuest,
           UserQuestItem,
           Vocabulary,
+          UserQuestAttempt,
         ],
         synchronize: configService.get('NODE_ENV') !== 'production',
         logging: configService.get('NODE_ENV') === 'development',

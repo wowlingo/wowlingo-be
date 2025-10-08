@@ -18,6 +18,7 @@ import { VocabHashtag } from '../../app/hashtag/entities/vocab-hashtag.entity';
 import { UserQuest } from '../../app/user-quest/entities/user-quest.entity';
 import { UserQuestItem } from '../../app/user-quest/entities/user-quest-item.entity';
 import { Vocabulary } from '../../app/vocabulary/entities/vocabulary.entity';
+import { UserQuestAttempt } from '../../app/user/entities/user-quest-attempt.entity';
 
 export const AppDataSource = new DataSource({
   type: 'mysql',
@@ -40,6 +41,7 @@ export const AppDataSource = new DataSource({
     UserQuest,
     UserQuestItem,
     Vocabulary,
+    UserQuestAttempt,
   ],
   synchronize: process.env.NODE_ENV !== 'production',
   logging: process.env.NODE_ENV === 'development',
