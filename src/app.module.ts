@@ -9,6 +9,7 @@ import { UserModule } from './app/user/user.module';
 import { CourseModule } from './app/course/course.module';
 import { QuestModule } from './app/quest/quest.module';
 import { UserQuestModule } from './app/user-quest/user-quest.module';
+import { VocabularyModule } from './app/vocabulary/vocabulary.module';
 
 @Module({
   imports: [
@@ -16,15 +17,16 @@ import { UserQuestModule } from './app/user-quest/user-quest.module';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    
+
     // 인프라 모듈 (ORM 설정)
     OrmModule,
-    
+
     // 애플리케이션 모듈들
     UserModule,
     CourseModule,
     QuestModule,
     UserQuestModule,
+    VocabularyModule,
   ],
 })
-export class AppModule {}
+export class AppModule { }

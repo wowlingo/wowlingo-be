@@ -1,5 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, JoinColumn } from 'typeorm';
 import { QuestItem } from './quest-item.entity';
+import { QuestItemUnitHashtag } from '../../hashtag/entities/quest-item-unit-hashtag.entity'
 
 @Entity('quest_item_units')
 export class QuestItemUnit {
@@ -20,4 +21,7 @@ export class QuestItemUnit {
 
   @Column({ name: 'remark', type: 'text', nullable: true, comment: '비고' })
   remark: string;
+
+  @OneToMany(() => QuestItemUnitHashtag, qiuh => qiuh.questItemUnit)
+  questItemUnitHashtags: QuestItemUnitHashtag[];
 }

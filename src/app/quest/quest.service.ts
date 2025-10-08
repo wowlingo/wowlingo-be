@@ -156,7 +156,7 @@ export class QuestService {
   async findQuestItemUnitById(id: number): Promise<QuestItemUnit> {
     return this.questItemUnitRepository.findOneOrFail({
       where: { questItemUnitId: id },
-      relations: ['questItem'],
+      // relations: ['questItem'],
     });
   }
 
