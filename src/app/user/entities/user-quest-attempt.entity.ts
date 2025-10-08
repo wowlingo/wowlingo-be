@@ -25,15 +25,19 @@ export class UserQuestAttempt {
         if (this.loginDate) {
             const kstDate = addHours(this.loginDate, 9);
             this['loginDateKST'] = format(kstDate, 'yyyy-MM-dd HH:mm:ss');
+        } else {
+            this['loginDateKST'] = '';
         }
 
         if (this.attemptDate) {
             const kstDate = addHours(this.attemptDate, 9);
             this['attemptDateKST'] = format(kstDate, 'yyyy-MM-dd HH:mm:ss');
+        } else {
+            this['attemptDateKST'] = '';
         }
     }
 
-    @ManyToOne(() => User, user => user.userQuestAttempts )
+    @ManyToOne(() => User, user => user.userQuestAttempts)
     @JoinColumn({ name: 'user_id' })
     user: User;
 }
