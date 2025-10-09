@@ -68,11 +68,15 @@ export class UserQuestController {
     // 해시태그 조회 (by date)
     @Get('/review-notes/hashtags')
     @ApiOperation({ summary: '사용자 오답노트 해시태그 조회' })
+    @ApiQuery({
+        name: 'date', required: false, description: '검색 날짜. 기본값은 오늘.'
+    })
     @ApiResponse({ status: 201, description: '사용자 오답노트 해시태그 조회 성공' })
     async getReviewNoteHashtags(
         @Query('userId', ParseIntPipe) userId: number,
-        @Query('date', ParseDatePipe) date: Date
+        @Query('date', ParseDatePipe) date?: Date
     ): Promise<BaseResponse<Hashtag[]>> {
+        if (!date) date = new Date();
         const questItemUnits = await this.userQuestService.getQuestItemsByCorrectYnAndAttemptAt(userId, false, date);
         const ids = questItemUnits.flatMap(it => [it.question1, it.question2, it.question3]).filter(Boolean);
         const hashtags = await this.hashtagService.findAllByQuestItemUnitIds(ids);
@@ -84,14 +88,18 @@ export class UserQuestController {
     @Get('/review-notes')
     @ApiOperation({ summary: '사용자 오답노트 조회' })
     @ApiQuery({
+        name: 'date', required: false, description: '검색 날짜. 기본값은 오늘.'
+    })
+    @ApiQuery({
         name: 'hashtags', required: false, description: '해쉬태그 id'
     })
     @ApiResponse({ status: 201, description: '사용자 오답노트 조회 성공' })
     async getReviewNotes(
         @Query('userId', ParseIntPipe) userId: number,
-        @Query('date', ParseDatePipe) date: Date,
+        @Query('date', ParseDatePipe) date?: Date,
         @Query('hashtags', new ParseArrayPipe({ items: Number, optional: true })) hashtagIds: number[] = []
     ): Promise<BaseResponse<QuestItemUnit[]>> {
+        if (!date) date = new Date();
         const questItemUnits = await this.userQuestService.getQuestItemUnitsByCorrectYnAndAttemptAtAndHashtags(userId, false, date, hashtagIds);
 
         return BaseResponse.success(questItemUnits, '오답노트 조회 성공.');
