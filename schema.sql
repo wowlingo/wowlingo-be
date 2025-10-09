@@ -144,3 +144,89 @@ VALUES(1, 'statement', '감자', '/sounds/potato-normal.wav', '/sounds/potato-sl
 INSERT INTO wowlingo.`user`
 (user_id, auth_type, auth, nickname)
 VALUES(1, 'kakao', 'kakaoauth', 'guest');
+
+
+CREATE TABLE `hashtags` (
+  `code` varchar(16) NOT NULL COMMENT '해시태그 코드',
+  `name` varchar(50) NOT NULL COMMENT '해시태그 문자열',
+  `hashtag_id` int NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (`hashtag_id`)
+) ENGINE=InnoDB;
+
+CREATE TABLE `quest_hashtags` (
+  `quest_id` bigint NOT NULL,
+  `hashtag_id` bigint NOT NULL,
+  `quest_hashtag_id` int NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (`quest_hashtag_id`)
+) ENGINE=InnoDB;
+
+CREATE TABLE `quest_item_unit_hashtags` (
+  `quest_item_unit_hashtag_id` int NOT NULL AUTO_INCREMENT,
+  `quest_item_unit_id` int NOT NULL,
+  `hashtag_id` int DEFAULT NULL,
+  PRIMARY KEY (`quest_item_unit_hashtag_id`),
+  KEY `FK_654fc686765721611952995a90d` (`hashtag_id`),
+  KEY `FK_c01c871e1339490d109784894b6` (`quest_item_unit_id`),
+  CONSTRAINT `FK_654fc686765721611952995a90d` FOREIGN KEY (`hashtag_id`) REFERENCES `hashtags` (`hashtag_id`),
+  CONSTRAINT `FK_c01c871e1339490d109784894b6` FOREIGN KEY (`quest_item_unit_id`) REFERENCES `quest_item_units` (`quest_item_unit_id`)
+) ENGINE=InnoDB;
+
+
+CREATE TABLE `user_quest_attempts` (
+  `login_date` timestamp NOT NULL COMMENT '로그인 날짜',
+  `attempt_date` timestamp NULL DEFAULT NULL COMMENT '학습 시도 날짜',
+  `ai_feedback_id` bigint DEFAULT NULL COMMENT 'AI 피드백 Id',
+  `user_quest_attempt_id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  PRIMARY KEY (`user_quest_attempt_id`),
+  KEY `FK_a37c6437085c74c17e2ef7456c1` (`user_id`),
+  CONSTRAINT `FK_a37c6437085c74c17e2ef7456c1` FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`)
+) ENGINE=InnoDB;
+
+
+CREATE TABLE `vocab_hashtags` (
+  `vocab_hashtag_id` int NOT NULL AUTO_INCREMENT,
+  `hashtag_id` int NOT NULL,
+  `vocab_id` int NOT NULL,
+  PRIMARY KEY (`vocab_hashtag_id`),
+  KEY `FK_61623e7a3c05b99d9ae8699e66c` (`hashtag_id`),
+  KEY `FK_04f465b0f10f635470a52550e40` (`vocab_id`),
+  CONSTRAINT `FK_04f465b0f10f635470a52550e40` FOREIGN KEY (`vocab_id`) REFERENCES `vocabulary` (`vocab_id`),
+  CONSTRAINT `FK_61623e7a3c05b99d9ae8699e66c` FOREIGN KEY (`hashtag_id`) REFERENCES `hashtags` (`hashtag_id`)
+) ENGINE=InnoDB;
+
+
+CREATE TABLE `vocabulary` (
+  `user_id` bigint NOT NULL,
+  `url_normal` varchar(500) NOT NULL COMMENT '일반 url',
+  `created_at` timestamp NOT NULL,
+  `slow_normal` varchar(500) NOT NULL COMMENT '느린 url',
+  `vocab_id` int NOT NULL AUTO_INCREMENT,
+  `str` varchar(50) NOT NULL COMMENT '문자열',
+  PRIMARY KEY (`vocab_id`)
+) ENGINE=InnoDB;
+
+CREATE TABLE `ai_feedbacks` (
+  `ai_feedback_id` bigint NOT NULL AUTO_INCREMENT,
+  `user_quest_attempt_id` bigint NOT NULL COMMENT '사용자 문제 이력 달력 id',
+  `created_at` timestamp NULL DEFAULT NULL COMMENT 'AI 생성 날짜',
+  `message` varchar(100) DEFAULT NULL COMMENT '오늘은 20문제 중 15개나 맞추셨어요',
+  `detail` varchar(500) DEFAULT NULL COMMENT '모음 구분은 매우 잘하셨고, 특히 동물 단어에서 90% 이상의 정답률을 기록했습니다.',
+  `tags` varchar(500) DEFAULT NULL COMMENT '#성공적, #높은정답률, #듣기능력향상',
+  PRIMARY KEY (`ai_feedback_id`)
+) ENGINE=InnoDB;
+
+
+INSERT INTO wowlingo.hashtags
+(code, name, hashtag_id)
+VALUES('code1', '환경음', 1),
+('code2', '말소리', 2),
+('code3', '의문문', 3),
+('code4', '평서문', 4),
+('code5', '3-4 음절 단어', 5),
+('code6', '2-3 음정 단어', 6),
+('code7', '1-4 어절 문장', 7),
+('code8', '2-4 어절 문장', 8),
+('code9', '음향 패턴 다른', 9),
+('code10', '음향 패턴 유사', 10),
+('code11', '문장', 11);
