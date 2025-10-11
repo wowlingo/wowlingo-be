@@ -1,16 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Quest } from './entities/quest.entity';
 import { QuestItem } from './entities/quest-item.entity';
 import { QuestItemUnit } from './entities/quest-item-unit.entity';
-import { 
-  SentenceTestResponseDto, 
-  SentenceQuestionResponseDto, 
-  CheckAnswerRequestDto, 
-  CheckAnswerResponseDto,
-  AddToWrongNotesRequestDto 
-} from './dto/sentence-test.dto';
+import { QuestDataDto, QuestItemDataDto } from './dto';
 
 @Injectable()
 export class QuestService {
@@ -21,28 +15,113 @@ export class QuestService {
     private questItemRepository: Repository<QuestItem>,
     @InjectRepository(QuestItemUnit)
     private questItemUnitRepository: Repository<QuestItemUnit>,
-  ) {}
+  ) { }
 
   // Quest 관련 메서드
   async findAllQuests(): Promise<Quest[]> {
     return this.questRepository.find({
-      relations: ['questItems', 'course'],
     });
+  }
+
+  async findOneQuest(id: number): Promise<Quest> {
+    return this.questRepository.findOneOrFail({
+      where: { questId: id },
+    });
+  }
+
+  async findQuestDataById(id: number): Promise<QuestDataDto> {
+    const quest = await this.questRepository.findOneOrFail({
+      where: { questId: id },
+      relations: ['questItems'],
+    });
+
+    const questDataDto = new QuestDataDto();
+    questDataDto.questId = quest.questId;
+    questDataDto.title = quest.title;
+    questDataDto.type = quest.type;
+
+    // TODO:: 사용자가 풀었던 문제 중 오답인 문제는 제외.
+
+    // 문제를 섞고
+    for (let i = quest.questItems.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [quest.questItems[i], quest.questItems[j]] = [quest.questItems[j], quest.questItems[i]];
+    }
+
+    // 문제 5개 추출. 
+    const randomQuestItems = quest.questItems.slice(0, quest.questItemCount);
+
+    const questUnitIds = randomQuestItems
+      .flatMap(item => [item.question1, item.question2, item.question3])
+      .filter(id => id);
+    const questUnits = await this.questItemUnitRepository.findBy({ questItemUnitId: In(questUnitIds) });
+    const questUnitMap = new Map(questUnits.map(unit => [unit.questItemUnitId, unit]));
+
+    questDataDto.items = randomQuestItems.map(item => {
+      const questItemDataDto = new QuestItemDataDto();
+
+      const units = [item.question1, item.question2, item.question3]
+        .filter(id => id)
+        .flatMap(id => {
+          const unit = questUnitMap.get(Number(id));
+          if (!unit) {
+            return [];
+          }
+          return [{
+            id: unit.questItemUnitId,
+            url: unit.urlNormal,
+            type: 'normal',
+          },
+          {
+            id: unit.questItemUnitId,
+            url: unit.urlSlow,
+            type: 'slow',
+          }];
+        });
+
+      questItemDataDto.units = units;
+
+      switch (quest.type) {
+        case 'statement-question':
+          // questItemDataDto.options = [
+          //   { type: 'statement', label: '평서문' },
+          //   { type: 'question', label: '의문문' },
+          // ];
+          questItemDataDto.answer = item.answerSq;
+          break;
+        case 'same-different':
+          // questItemDataDto.options = [
+          //   { type: 'same', label: '같아요' },
+          //   { type: 'different', label: '달라요' },
+          // ];
+          questItemDataDto.answer = item.answerOx;
+          break;
+        default:
+          // questItemDataDto.options = [];
+          questItemDataDto.answer = '';
+      }
+      return questItemDataDto;
+    });
+
+    return questDataDto;
+  }
+
+  async updateQuest(id: number, courseData: Partial<Quest>): Promise<Quest> {
+    await this.questRepository.update(id, courseData);
+    return this.findOneQuest(id);
+  }
+
+  async removeQuest(id: number): Promise<void> {
+    await this.questRepository.delete(id);
   }
 
   async findQuestById(id: number): Promise<Quest> {
     return this.questRepository.findOneOrFail({
       where: { questId: id },
-      relations: ['questItems', 'course'],
-    });
-  }
-
-  async findQuestsByCourseId(courseId: number): Promise<Quest[]> {
-    return this.questRepository.find({
-      where: { courseId },
       relations: ['questItems'],
     });
   }
+
 
   async createQuest(questData: Partial<Quest>): Promise<Quest> {
     const quest = this.questRepository.create(questData);
@@ -91,118 +170,12 @@ export class QuestService {
 
   async findQuestItemUnitsByQuestItemId(questItemId: number): Promise<QuestItemUnit[]> {
     return this.questItemUnitRepository.find({
-      where: { questItemId },
+      // where: { questItemId },
     });
   }
 
   async createQuestItemUnit(questItemUnitData: Partial<QuestItemUnit>): Promise<QuestItemUnit> {
     const questItemUnit = this.questItemUnitRepository.create(questItemUnitData);
     return this.questItemUnitRepository.save(questItemUnit);
-  }
-
-  // 문장 검사 관련 메서드
-  async getSentenceTest(questId: number): Promise<SentenceTestResponseDto> {
-    const quest = await this.questRepository.findOneOrFail({
-      where: { questId },
-      relations: ['course'],
-    });
-
-    // QuestItems를 별도로 조회
-    const questItems = await this.questItemRepository.find({
-      where: { questId },
-    });
-
-    console.log('Quest found:', quest);
-    console.log('Quest items count:', questItems.length);
-
-    const questions: SentenceQuestionResponseDto[] = [];
-    
-    for (const questItem of questItems) {
-      console.log('Processing quest item:', questItem.questItemId);
-      
-      // question1에서 음원 찾기
-      const audioUnit = await this.questItemUnitRepository.findOne({
-        where: { questItemUnitId: questItem.question1 },
-      });
-
-      console.log('Audio unit found:', !!audioUnit);
-
-      // answer1, answer2, answer3에서 선택지 찾기
-      const optionUnits = await this.questItemUnitRepository.find({
-        where: [
-          { questItemUnitId: questItem.answer1 },
-          { questItemUnitId: questItem.answer2 },
-          { questItemUnitId: questItem.answer3 },
-        ],
-      });
-
-      console.log('Option units found:', optionUnits.length);
-
-      // 정답 찾기 (answer1이 정답이라고 가정)
-      const correctAnswerUnit = optionUnits.find(unit => unit.questItemUnitId === questItem.answer1);
-
-      console.log('Correct answer unit found:', !!correctAnswerUnit);
-
-      if (audioUnit && correctAnswerUnit) {
-        const question = {
-          questItemId: questItem.questItemId,
-          questionOrder: questItem.questItemId,
-          audioUrl: audioUnit.urlNormal || '',
-          slowAudioUrl: audioUnit.urlSlow,
-          correctAnswerUnitId: correctAnswerUnit.questItemUnitId,
-          correctAnswerText: correctAnswerUnit.str || '',
-          options: optionUnits.map(unit => ({
-            questItemUnitId: unit.questItemUnitId,
-            text: unit.str || '',
-          })),
-          explanation: questItem.remark,
-        };
-        
-        console.log('Adding question:', question.questItemId);
-        questions.push(question);
-      } else {
-        console.log('Skipping quest item - missing audio or correct answer unit');
-        console.log('Audio unit:', audioUnit);
-        console.log('Correct answer unit:', correctAnswerUnit);
-      }
-    }
-
-    console.log('Final questions count:', questions.length);
-
-    return {
-      questId: quest.questId,
-      title: quest.course?.title || '문장 검사',
-      description: quest.course?.objective,
-      totalQuestions: quest.questItemCount,
-      questions,
-    };
-  }
-
-  async checkSentenceAnswer(checkAnswerDto: CheckAnswerRequestDto): Promise<CheckAnswerResponseDto> {
-    const questItem = await this.questItemRepository.findOneOrFail({
-      where: { questItemId: checkAnswerDto.questItemId },
-    });
-
-    // answer1이 정답이라고 가정
-    const isCorrect = questItem.answer1 === checkAnswerDto.userAnswerUnitId;
-    
-    // 정답 정보 가져오기
-    const correctAnswerUnit = await this.questItemUnitRepository.findOneOrFail({
-      where: { questItemUnitId: questItem.answer1 },
-    });
-
-    return {
-      isCorrect,
-      correctAnswerUnitId: correctAnswerUnit.questItemUnitId,
-      correctAnswerText: correctAnswerUnit.str || '',
-      explanation: questItem.remark,
-    };
-  }
-
-  async addToWrongNotes(addToWrongNotesDto: AddToWrongNotesRequestDto): Promise<void> {
-    // user_quest_items 테이블에 오답 기록 저장
-    // 실제 구현에서는 UserQuestItem 엔티티를 사용해야 함
-    console.log('오답 노트 추가:', addToWrongNotesDto);
-    // TODO: UserQuestItem 엔티티 생성 후 구현
   }
 }

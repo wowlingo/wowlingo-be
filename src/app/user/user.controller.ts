@@ -52,22 +52,4 @@ export class UserController {
     return BaseResponse.success(undefined, '사용자가 성공적으로 삭제되었습니다.');
   }
 
-  @Post(':id/courses/:courseId')
-  @ApiOperation({ summary: '사용자 코스 등록' })
-  @ApiResponse({ status: 201, description: '코스 등록 성공' })
-  async enrollCourse(
-    @Param('id', ParseIntPipe) userId: number,
-    @Param('courseId', ParseIntPipe) courseId: number,
-  ): Promise<BaseResponse<any>> {
-    const userCourse = await this.userService.enrollCourse(userId, courseId);
-    return BaseResponse.success(userCourse, '코스에 성공적으로 등록되었습니다.');
-  }
-
-  @Get(':id/courses')
-  @ApiOperation({ summary: '사용자 코스 목록 조회' })
-  @ApiResponse({ status: 200, description: '코스 목록 조회 성공' })
-  async getUserCourses(@Param('id', ParseIntPipe) userId: number): Promise<BaseResponse<any[]>> {
-    const courses = await this.userService.getUserCourses(userId);
-    return BaseResponse.success(courses, '사용자 코스 목록을 성공적으로 조회했습니다.');
-  }
 }

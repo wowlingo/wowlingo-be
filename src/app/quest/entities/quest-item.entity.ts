@@ -28,6 +28,9 @@ export class QuestItem {
   @Column({ name: 'answer_ox', type: 'varchar', length: 1, nullable: true, comment: 'O/X 답변' })
   answerOx: string;
 
+  @Column({ name: 'answer_sq', type: 'varchar', length: 10, nullable: true, comment: '평서문/의문문 답변' })
+  answerSq: string;
+
   @Column({ name: 'answer1', type: 'bigint', nullable: true })
   answer1: number;
 
@@ -49,7 +52,4 @@ export class QuestItem {
   @ManyToOne(() => Quest, quest => quest.questItems)
   @JoinColumn({ name: 'quest_id' })
   quest: Quest;
-
-  @OneToMany(() => QuestItemUnit, questItemUnit => questItemUnit.questItem)
-  questItemUnits: QuestItemUnit[];
 }

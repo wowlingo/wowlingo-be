@@ -2,34 +2,38 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
-import { UserCourse } from './entities/user-course.entity';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
-    @InjectRepository(UserCourse)
-    private userCourseRepository: Repository<UserCourse>,
   ) {}
 
   async findAll(): Promise<User[]> {
     return this.userRepository.find({
-      relations: ['userCourses'],
+      relations: ['userQuests'],
     });
   }
 
   async findOne(id: number): Promise<User> {
     return this.userRepository.findOneOrFail({
       where: { userId: id },
-      relations: ['userCourses'],
+      relations: ['userQuests'],
     });
   }
 
   async findByNickname(nickname: string): Promise<User> {
     return this.userRepository.findOneOrFail({
       where: { nickname },
-      relations: ['userCourses'],
+      relations: ['userQuests'],
+    });
+  }
+
+  async findByAuth(authType: string, auth: string): Promise<User> {
+    return this.userRepository.findOneOrFail({
+      where: { authType, auth },
+      relations: ['userQuests'],
     });
   }
 
@@ -45,23 +49,5 @@ export class UserService {
 
   async remove(id: number): Promise<void> {
     await this.userRepository.delete(id);
-  }
-
-  // 사용자의 코스 등록
-  async enrollCourse(userId: number, courseId: number): Promise<UserCourse> {
-    const userCourse = this.userCourseRepository.create({
-      userId,
-      courseId,
-      startedAt: new Date(),
-    } as Partial<UserCourse>);
-    return this.userCourseRepository.save(userCourse);
-  }
-
-  // 사용자의 코스 목록 조회
-  async getUserCourses(userId: number): Promise<UserCourse[]> {
-    return this.userCourseRepository.find({
-      where: { userId },
-      relations: ['course'],
-    });
   }
 }

@@ -6,11 +6,11 @@ config();
 
 // 엔티티 import
 import { User } from '../../app/user/entities/user.entity';
-import { UserCourse } from '../../app/user/entities/user-course.entity';
-import { Course } from '../../app/course/entities/course.entity';
 import { Quest } from '../../app/quest/entities/quest.entity';
 import { QuestItem } from '../../app/quest/entities/quest-item.entity';
 import { QuestItemUnit } from '../../app/quest/entities/quest-item-unit.entity';
+import { UserQuest } from '../../app/user-quest/entities/user-quest.entity';
+import { UserQuestItem } from '../../app/user-quest/entities/user-quest-item.entity';
 
 export const AppDataSource = new DataSource({
   type: 'mysql',
@@ -19,7 +19,11 @@ export const AppDataSource = new DataSource({
   username: process.env.DB_USERNAME || 'root',
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_DATABASE || 'wowlingo',
-  entities: [User, UserCourse, Course, Quest, QuestItem, QuestItemUnit],
+  charset: 'utf8mb4',
+  extra: {
+    charset: 'utf8mb4_unicode_ci',
+  },
+  entities: [User, Quest, QuestItem, QuestItemUnit, UserQuest, UserQuestItem],
   synchronize: process.env.NODE_ENV !== 'production',
   logging: process.env.NODE_ENV === 'development',
   migrations: ['src/infra/persistence/migrations/*.ts'],

@@ -6,8 +6,8 @@ import { OrmModule } from './infra/persistence/orm.module';
 
 // 애플리케이션 모듈들
 import { UserModule } from './app/user/user.module';
-import { CourseModule } from './app/course/course.module';
 import { QuestModule } from './app/quest/quest.module';
+import { UserQuestModule } from './app/user-quest/user-quest.module';
 
 @Module({
   imports: [
@@ -21,8 +21,8 @@ import { QuestModule } from './app/quest/quest.module';
     
     // 애플리케이션 모듈들
     UserModule,
-    CourseModule,
     QuestModule,
+    UserQuestModule,
   ],
 })
 export class AppModule {}
