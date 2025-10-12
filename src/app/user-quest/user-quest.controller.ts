@@ -6,6 +6,7 @@ import { UserQuestItem } from './entities/user-quest-item.entity';
 import { UserQuestItemDto } from './dto/user-quest-item.dto'
 import { SubmitQuestResultDto } from './dto/submit-quest-result.dto'
 import { UserQuestService } from './user-quest.service'
+import { UserQuestStatusDto, UserQuestListResponseDto } from './dto/user-quest-status.dto'
 
 @ApiTags('UserQuests')
 @Controller('user-quests')
@@ -58,7 +59,23 @@ export class UserQuestController {
     }
 
     @Get(':userId/:questId')
-    @ApiOperation({ summary: '사용자 퀘스트 조회' })
+    @ApiOperation({ summary: '사용자 퀘스트 상태 조회 (홈 화면용)' })
+    @ApiResponse({ 
+        status: 200, 
+        description: '사용자 퀘스트 상태 조회 성공',
+        type: UserQuestStatusDto
+    })
+    async getUserQuestStatus(
+        @Param('userId', ParseIntPipe) userId: number,
+        @Param('questId', ParseIntPipe) questId: number)
+        : Promise<BaseResponse<UserQuestStatusDto>> {
+        const questStatus = await this.userQuestService.getUserQuestStatus(userId, questId);
+
+        return BaseResponse.success(questStatus, '퀘스트 상태 조회 성공.');
+    }
+
+    @Get(':userId/:questId/raw')
+    @ApiOperation({ summary: '사용자 퀘스트 조회 (원본 데이터)' })
     @ApiResponse({ status: 200, description: '사용자 퀘스트 조회 성공' })
     async getUserQuest(
         @Param('userId', ParseIntPipe) userId: number,
@@ -77,7 +94,22 @@ export class UserQuestController {
     }
 
     @Get(':userId')
-    @ApiOperation({ summary: '사용자의 모든 퀘스트 목록 조회' })
+    @ApiOperation({ summary: '사용자의 모든 퀘스트 목록 조회 (홈 화면용)' })
+    @ApiResponse({ 
+        status: 200, 
+        description: '사용자 퀘스트 상태 목록 조회 성공',
+        type: UserQuestListResponseDto
+    })
+    async getUserQuestStatusList(
+        @Param('userId', ParseIntPipe) userId: number)
+        : Promise<BaseResponse<UserQuestListResponseDto>> {
+        const result = await this.userQuestService.getUserQuestStatusList(userId);
+        
+        return BaseResponse.success(result, '퀘스트 상태 목록 조회 성공.');
+    }
+
+    @Get(':userId/raw')
+    @ApiOperation({ summary: '사용자의 모든 퀘스트 목록 조회 (원본 데이터)' })
     @ApiResponse({ status: 200, description: '사용자 퀘스트 목록 조회 성공' })
     async getUserQuests(
         @Param('userId', ParseIntPipe) userId: number)

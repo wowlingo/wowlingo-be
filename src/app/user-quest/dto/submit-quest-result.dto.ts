@@ -27,6 +27,7 @@ export class SubmitQuestResultDto {
     example: 300,
     required: true,
   })
+  @Type(() => Number)
   @IsNumber()
   timeSpent: number;
 
@@ -43,6 +44,7 @@ export class SubmitQuestResultDto {
     example: 10,
     required: true,
   })
+  @Type(() => Number)
   @IsNumber()
   totalQuestItemCount: number;
 
@@ -51,6 +53,7 @@ export class SubmitQuestResultDto {
     example: 8,
     required: true,
   })
+  @Type(() => Number)
   @IsNumber()
   correctQuestItemCount: number;
 
@@ -59,6 +62,7 @@ export class SubmitQuestResultDto {
     example: 80.00,
     required: true,
   })
+  @Type(() => Number)
   @IsNumber()
   accuracyRate: number;
 

@@ -8,6 +8,7 @@ export class UserQuestItemDto {
     example: 1,
     required: true,
   })
+  @Type(() => Number)
   @IsNumber()
   questItemId: number;
 
@@ -35,6 +36,7 @@ export class UserQuestItemDto {
     required: false,
   })
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   userAnswer: number | null;
 
@@ -53,6 +55,7 @@ export class UserQuestItemDto {
     required: false,
   })
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   timeSpent: number;
 
@@ -62,6 +65,7 @@ export class UserQuestItemDto {
     required: false,
   })
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   attemptCount: number;
 
