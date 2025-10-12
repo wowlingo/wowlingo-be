@@ -25,7 +25,7 @@ export class QuestItem {
   @Column({ name: 'question3', type: 'bigint', nullable: true })
   question3: number;
 
-  @Column({ name: 'answer_ox', type: 'varchar', length: 1, nullable: true, comment: 'O/X 답변' })
+  @Column({ name: 'answer_ox', type: 'varchar', length: 10, nullable: true, comment: 'Same/Different 답변' })
   answerOx: string;
 
   @Column({ name: 'answer_sq', type: 'varchar', length: 10, nullable: true, comment: '평서문/의문문 답변' })

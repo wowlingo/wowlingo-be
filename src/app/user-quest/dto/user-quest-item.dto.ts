@@ -12,8 +12,8 @@ export class UserQuestItemDto {
   questItemId: number;
 
   @ApiProperty({
-    description: 'O/X 답변',
-    example: 'o',
+    description: 'Same/Different 답변',
+    example: 'same',
     required: false,
   })
   @IsOptional()

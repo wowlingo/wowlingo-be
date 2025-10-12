@@ -76,7 +76,79 @@ export class UserQuestService {
         return userQuest;
     }
 
-    private async findOrCreateUserQuest(userId: number, questId: number): Promise<UserQuest> {
+    async getUserQuests(userId: number): Promise<UserQuest[]> {
+        const userQuests = await this.userQuestRepository.find({
+            where: {
+                userId: userId,
+            },
+            order: {
+                startedAt: 'DESC',
+            },
+        });
+
+        return userQuests;
+    }
+
+    async submitQuestResult(
+        userId: number,
+        questId: number,
+        items: Partial<UserQuestItemDto>[],
+        startedAt: Date,
+        endedAt: Date,
+        timeSpent: number,
+        doneYn: boolean,
+        totalQuestItemCount: number,
+        correctQuestItemCount: number,
+        accuracyRate: number
+    ): Promise<{ userQuest: UserQuest; userQuestItems: UserQuestItem[] }> {
+        // 1. 사용자 퀘스트 조회 및 생성 (startedAt 전달)
+        const userQuest = await this.findOrCreateUserQuest(userId, questId, startedAt);
+
+        // 2. 모든 아이템 결과 저장
+        const savedItems: UserQuestItem[] = [];
+        for (const itemData of items) {
+            if (!itemData?.questItemId) {
+                continue;
+            }
+
+            // 문제 아이템 조회
+            const questItem = await this.questItemRepository.findOneBy({
+                questId,
+                questItemId: itemData.questItemId,
+            });
+
+            if (!questItem) {
+                console.log(`아이템을 찾을 수 없습니다: questId=${questId}, questItemId=${itemData.questItemId}`);
+                continue;
+            }
+
+            // 사용자 답변 저장
+            const savedItem = await this.processUserAnswer(userQuest, itemData, questItem);
+            savedItems.push(savedItem);
+        }
+
+        // 3. 프론트에서 계산한 값으로 퀘스트 업데이트
+        await this.userQuestRepository.update(userQuest.userQuestId, {
+            doneYn,
+            endedAt,
+            timeSpent,
+            totalQuestItemCount,
+            correctQuestItemCount,
+            accuracyRate,
+        });
+
+        // 4. 업데이트된 userQuest 재조회
+        const updatedUserQuest = await this.userQuestRepository.findOneBy({ 
+            userQuestId: userQuest.userQuestId 
+        });
+
+        return {
+            userQuest: updatedUserQuest || userQuest,
+            userQuestItems: savedItems,
+        };
+    }
+
+    private async findOrCreateUserQuest(userId: number, questId: number, startedAt?: Date): Promise<UserQuest> {
         let userQuest = await this.userQuestRepository.findOneBy({ userId, questId });
         if (!userQuest) {
             // 사용자 퀘스트 생성
@@ -89,7 +161,7 @@ export class UserQuestService {
                 userId,
                 questId,
                 doneYn: false,
-                startedAt: new Date(),
+                startedAt: startedAt || new Date(),
                 totalQuestItemCount: quest.questItemCount,
                 correctQuestItemCount: 0,
                 accuracyRate: 0.00,
@@ -142,7 +214,7 @@ export class UserQuestService {
         }
     }
 
-    private async checkAndFinalizeQuest(userQuest: UserQuest): Promise<void> {
+    private async checkAndFinalizeQuest(userQuest: UserQuest, endedAt?: Date, timeSpent?: number): Promise<void> {
         // 완료된 문제 아이템 수 조회
         const completedItems = await this.userQuestItemRepository.count({
             where: { userQuestId: userQuest.userQuestId }
@@ -167,7 +239,8 @@ export class UserQuestService {
             correctQuestItemCount: correctItems,
             accuracyRate: accuracyRate,
             doneYn: isCompleted,
-            endedAt: isCompleted ? new Date() : undefined,
+            endedAt: endedAt || (isCompleted ? new Date() : undefined),
+            timeSpent: timeSpent !== undefined ? timeSpent : undefined,
         });
     }
 }

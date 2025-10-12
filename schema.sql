@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS `quest_items` (
   `answer4` bigint DEFAULT NULL,
   `answer5` bigint DEFAULT NULL,
   `answer_sq` varchar(10) DEFAULT NULL COMMENT '평서문/의문문 답변',
-  `answer_ox` varchar(1) DEFAULT NULL COMMENT 'O/X 답변',
+  `answer_ox` varchar(10) DEFAULT NULL COMMENT 'Same/Different 답변',
   PRIMARY KEY (`quest_item_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS `user_quest_items` (
   `user_quest_id` int NOT NULL,
   `quest_item_id` bigint NOT NULL,
   `selected_answer` varchar(255) DEFAULT NULL COMMENT '선택한 답변',
-  `user_answer_ox` varchar(1) DEFAULT NULL COMMENT 'O/X 답변',
+  `user_answer_ox` varchar(10) DEFAULT NULL COMMENT 'Same/Different 답변',
   `user_answer_sq` varchar(10) DEFAULT NULL COMMENT '평서문/의문문 답변',
   `user_answer` bigint DEFAULT NULL,
   `correct_yn` tinyint DEFAULT NULL,
@@ -107,14 +107,14 @@ VALUES
 (1, 'string', 1, 11, NULL, NULL, -1, 11, NULL, NULL, NULL, 'question', NULL, 11),
 (1, 'string', 1, 12, NULL, NULL, -1, 12, NULL, NULL, NULL, 'question', NULL, 12),
 (2, 'choice', 1, 13, NULL, NULL, 13, 14, NULL, NULL, NULL, 'word', NULL, 13),
-(2, 'choice', 1, 14, NULL, NULL, 2, 17, NULL, NULL, NULL, 'word', NULL, 14),
-(2, 'choice', 1, 15, NULL, NULL, 1, 15, NULL, NULL, NULL, 'word', NULL, 15),
-(2, 'choice', 1, 16, NULL, NULL, 16, 3, NULL, NULL, NULL, 'sentence', NULL, 16),
-(2, 'choice', 1, 17, NULL, NULL, 4, 17, NULL, NULL, NULL, 'sentence', NULL, 17),
-(3, 'same-different', 0, 18, 14, NULL, 18, -1, NULL, NULL, NULL, NULL, 'x', 18),
+(2, 'choice', 1, 14, NULL, NULL, 14, 17, NULL, NULL, NULL, 'word', NULL, 14),
+(2, 'choice', 1, 15, NULL, NULL, 22, 15, NULL, NULL, NULL, 'word', NULL, 15),
+(2, 'choice', 1, 16, NULL, NULL, 16, 21, NULL, NULL, NULL, 'sentence', NULL, 16),
+(2, 'choice', 1, 17, NULL, NULL, 24, 17, NULL, NULL, NULL, 'sentence', NULL, 17),
+(3, 'same-different', 0, 18, 14, NULL, 18, -1, NULL, NULL, NULL, NULL, 'different', 18),
 -- 들려줄 때 18 14를 연속으로 들려줘야 함? quest_item_id가 question과 answer에 들어가는게 여기서는 이상함
-(3, 'same-different', 0, 19, 19, NULL, 19, -1, NULL, NULL, NULL, NULL, 'o', 19),
-(3, 'same-different', 0, 20, 20, NULL, -1, 20, NULL, NULL, NULL, NULL, 'o', 20);
+(3, 'same-different', 0, 19, 19, NULL, 19, -1, NULL, NULL, NULL, NULL, 'same', 19),
+(3, 'same-different', 0, 20, 20, NULL, -1, 20, NULL, NULL, NULL, NULL, 'same', 20);
 
 
 INSERT INTO wowlingo.quest_item_units
@@ -139,8 +139,12 @@ VALUES
 (17, 'sentence', '고구마', '/sounds/sweetpotato.wav', '/sounds/sweetpotato-slow.wav', NULL),
 (18, 'different', '모래사장', '/sounds/sandybeach.wav', '/sounds/sandybeach-slow.wav', NULL),
 -- answer_ox의 type.... 어떻게 활용하는 거지? 그냥 word/sentence 인 것들을 quest_items로?
-(19, 'same', '미꾸라지', '/sounds/loach.wav', '/sounds/loach-slow.wav', NULL),
-(20, 'same', '도깨비', '/sounds/goblin.wav', '/sounds/goblin-slow.wav', NULL);
+(19, 'sentence', '미꾸라지', '/sounds/loach.wav', '/sounds/loach-slow.wav', NULL),
+(20, 'sentence', '도깨비', '/sounds/goblin.wav', '/sounds/goblin-slow.wav', NULL),
+(21, 'sentence  ', '감자', '/sounds/potato-normal.wav', '/sounds/potato-slow.wav', NULL),
+(22, 'word', '고구마', '/sounds/sweetpotato.wav', '/sounds/sweetpotato-slow.wav', NULL),
+(23, 'word', '다리미', '/sounds/iron.wav', '/sounds/iron-slow.wav', NULL),
+(24, 'word', '도깨비', '/sounds/goblin.wav', '/sounds/goblin-slow.wav', NULL);
 
 
 INSERT INTO wowlingo.`user`

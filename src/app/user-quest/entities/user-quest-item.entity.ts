@@ -18,7 +18,7 @@ export class UserQuestItem {
   questItemId: number;
 
   @Expose()
-  @Column({ name: 'user_answer_ox', type: 'varchar', length: 1, nullable: true, comment: 'O/X 답변' })
+  @Column({ name: 'user_answer_ox', type: 'varchar', length: 10, nullable: true, comment: 'Same/Different 답변' })
   userAnswerOx: string | null;
 
   @Expose()
