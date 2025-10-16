@@ -16,8 +16,8 @@ export class UserQuestStatusDto {
   @ApiProperty({ description: '퀘스트 태그 목록', example: ['#환경음', '#말소리'] })
   tags: string[];
 
-  @ApiProperty({ description: '완료된 문제 수', example: 12 })
-  completedCount: number;
+  @ApiProperty({ description: '맞힌 문제 수', example: 12 })
+  correctCount: number;
 
   @ApiProperty({ description: '총 문제 수', example: 70 })
   totalCount: number;

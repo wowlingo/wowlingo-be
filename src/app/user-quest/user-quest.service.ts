@@ -123,7 +123,7 @@ export class UserQuestService {
             console.log(`Processing quest ${quest.questId} (${typeof quest.questId}):`, 
                 userQuest ? `Found userQuest (userQuestId: ${userQuest.userQuestId}, doneYn: ${userQuest.doneYn})` : 'No userQuest found');
             
-            let completedCount = 0;
+            let correctCount = 0;
             let isStarted = false;
             let isCompleted = false;
             let accuracyRate = 0;
@@ -133,17 +133,20 @@ export class UserQuestService {
                 isCompleted = userQuest.doneYn;
                 accuracyRate = userQuest.accuracyRate;
                 
-                // 실제 완료된 문제 수 계산 (UserQuestItem에서)
-                completedCount = await this.userQuestItemRepository.count({
-                    where: { userQuestId: userQuest.userQuestId }
+                // 맞힌 문제 수 계산 (UserQuestItem에서 correctYn: true인 것만)
+                correctCount = await this.userQuestItemRepository.count({
+                    where: { 
+                        userQuestId: userQuest.userQuestId,
+                        correctYn: true
+                    }
                 });
                 
-                console.log(`Quest ${quest.questId}: completedCount=${completedCount}, isCompleted=${isCompleted}, accuracyRate=${accuracyRate}`);
+                console.log(`Quest ${quest.questId}: correctCount=${correctCount}, isCompleted=${isCompleted}, accuracyRate=${accuracyRate}`);
             }
 
             // 진행률 계산
             const progressRate = quest.questItemCount > 0 ? 
-                Math.round((completedCount / quest.questItemCount) * 100) : 0;
+                Math.round((correctCount / quest.questItemCount) * 100) : 0;
 
             // 태그 생성 (퀘스트 타입에 따라)
             const tags = this.generateQuestTags(quest.type);
@@ -154,7 +157,7 @@ export class UserQuestService {
                 type: quest.type,
                 order: quest.order,
                 tags,
-                completedCount,
+                correctCount,
                 totalCount: quest.questItemCount,
                 isCompleted,
                 isStarted,
@@ -189,7 +192,7 @@ export class UserQuestService {
             relations: ['userQuestItems']
         });
 
-        let completedCount = 0;
+        let correctCount = 0;
         let isStarted = false;
         let isCompleted = false;
         let accuracyRate = 0;
@@ -199,15 +202,18 @@ export class UserQuestService {
             isCompleted = userQuest.doneYn;
             accuracyRate = userQuest.accuracyRate;
             
-            // 실제 완료된 문제 수 계산
-            completedCount = await this.userQuestItemRepository.count({
-                where: { userQuestId: userQuest.userQuestId }
+            // 맞힌 문제 수 계산 (correctYn: true인 것만)
+            correctCount = await this.userQuestItemRepository.count({
+                where: { 
+                    userQuestId: userQuest.userQuestId,
+                    correctYn: true
+                }
             });
         }
 
         // 진행률 계산
         const progressRate = quest.questItemCount > 0 ? 
-            Math.round((completedCount / quest.questItemCount) * 100) : 0;
+            Math.round((correctCount / quest.questItemCount) * 100) : 0;
 
         // 태그 생성
         const tags = this.generateQuestTags(quest.type);
@@ -218,7 +224,7 @@ export class UserQuestService {
             type: quest.type,
             order: quest.order,
             tags,
-            completedCount,
+            correctCount,
             totalCount: quest.questItemCount,
             isCompleted,
             isStarted,
