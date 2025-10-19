@@ -1,5 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, JoinColumn } from 'typeorm';
-import { QuestItem } from './quest-item.entity';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { QuestItemUnitHashtag } from '../../hashtag/entities/quest-item-unit-hashtag.entity'
 
 @Entity('quest_item_units')

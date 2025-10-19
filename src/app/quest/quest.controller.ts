@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Body, ParseIntPipe, Query } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Param, Body, ParseIntPipe, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { QuestService } from './quest.service';
 import { Quest } from './entities/quest.entity';
@@ -15,17 +15,9 @@ export class QuestController {
   // Quest 엔드포인트
   @Get()
   @ApiOperation({ summary: '모든 퀘스트 조회' })
-  @ApiQuery({ name: 'courseId', required: false, description: '코스 ID로 필터링' })
   @ApiResponse({ status: 200, description: '퀘스트 목록 조회 성공' })
-  async findAllQuests(@Query('courseId') courseId?: string): Promise<BaseResponse<Quest[]>> {
-    let quests: Quest[];
-    
-    if (courseId) {
-      quests = await this.questService.findQuestsByCourseId(parseInt(courseId));
-    } else {
-      quests = await this.questService.findAllQuests();
-    }
-    
+  async findAllQuests(): Promise<BaseResponse<Quest[]>> {
+    const quests = await this.questService.findAllQuests();
     return BaseResponse.success(quests, '퀘스트 목록을 성공적으로 조회했습니다.');
   }
 
@@ -43,6 +35,25 @@ export class QuestController {
   async createQuest(@Body() questData: Partial<Quest>): Promise<BaseResponse<Quest>> {
     const quest = await this.questService.createQuest(questData);
     return BaseResponse.success(quest, '퀘스트가 성공적으로 생성되었습니다.');
+  }
+
+  @Put(':id')
+  @ApiOperation({ summary: '코스 정보 수정' })
+  @ApiResponse({ status: 200, description: '코스 정보 수정 성공' })
+  async updateQuest(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() questData: Partial<Quest>,
+  ): Promise<BaseResponse<Quest>> {
+    const quest = await this.questService.updateQuest(id, questData);
+    return BaseResponse.success(quest, '코스 정보가 성공적으로 수정되었습니다.');
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: '코스 삭제' })
+  @ApiResponse({ status: 200, description: '코스 삭제 성공' })
+  async removeQuest(@Param('id', ParseIntPipe) id: number): Promise<BaseResponse<void>> {
+    await this.questService.removeQuest(id);
+    return BaseResponse.success(undefined, '코스가 성공적으로 삭제되었습니다.');
   }
 
   // QuestItem 엔드포인트

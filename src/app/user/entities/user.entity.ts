@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
-import { UserCourse } from './user-course.entity';
 import { UserQuestAttempt } from './user-quest-attempt.entity';
+import { UserQuest } from '../../user-quest/entities/user-quest.entity';
 
 @Entity('user')
 export class User {
@@ -16,9 +16,9 @@ export class User {
   @Column({ name: 'nickname', type: 'varchar', length: 50, comment: '닉네임' })
   nickname: string;
 
-  @OneToMany(() => UserCourse, userCourse => userCourse.user)
-  userCourses: UserCourse[];
-
   @OneToMany(() => UserQuestAttempt, userQuestAttempt => userQuestAttempt.user)
   userQuestAttempts: UserQuestAttempt[];
+
+  @OneToMany(() => UserQuest, userQuest => userQuest.user)
+  userQuests: UserQuest[];
 }

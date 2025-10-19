@@ -4,15 +4,13 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 
 // 엔티티 import (각 모듈에서 가져옴)
 import { User } from '../../app/user/entities/user.entity';
-import { UserCourse } from '../../app/user/entities/user-course.entity';
-import { Course } from '../../app/course/entities/course.entity';
 import { Quest } from '../../app/quest/entities/quest.entity';
 import { QuestItem } from '../../app/quest/entities/quest-item.entity';
 import { QuestItemUnit } from '../../app/quest/entities/quest-item-unit.entity';
-
-import { VocabHashtag } from '../../app/hashtag/entities/vocab-hashtag.entity';
 import { UserQuest } from '../../app/user-quest/entities/user-quest.entity';
 import { UserQuestItem } from '../../app/user-quest/entities/user-quest-item.entity';
+
+import { VocabHashtag } from '../../app/hashtag/entities/vocab-hashtag.entity';
 import { Vocabulary } from '../../app/vocabulary/entities/vocabulary.entity';
 import { Hashtag } from '../../app/hashtag/entities/hashtag.entity';
 import { QuestHashtag } from '../../app/hashtag/entities/quest-hashtag.entity';
@@ -33,8 +31,6 @@ import { UserQuestAttempt } from '../../app/user/entities/user-quest-attempt.ent
         database: configService.get('DB_DATABASE', 'wowlingo'),
         entities: [
           User,
-          UserCourse,
-          Course,
           Quest,
           QuestItem,
           QuestItemUnit,
@@ -47,6 +43,10 @@ import { UserQuestAttempt } from '../../app/user/entities/user-quest-attempt.ent
           Vocabulary,
           UserQuestAttempt,
         ],
+        charset: 'utf8mb4',
+        extra: {
+          charset: 'utf8mb4_unicode_ci',
+        },
         synchronize: configService.get('NODE_ENV') !== 'production',
         logging: configService.get('NODE_ENV') === 'development',
         retryAttempts: 3,

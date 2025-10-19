@@ -1,27 +1,21 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsDate, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsBoolean, IsDate, IsNumber, IsOptional, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class UserQuestItemDto {
-  @ApiProperty({
-    description: '퀘스트를 수행한 사용자 ID',
-    example: 1,
-    required: true, 
-  })
-  @IsNumber()
-  userQuestId: number;
-
   @ApiProperty({
     description: '퀘스트 아이템 ID',
     example: 1,
     required: true,
   })
+
+  @Type(() => Number)
   @IsNumber()
   questItemId: number;
 
   @ApiProperty({
-    description: '사용자 답안 OX', 
-    example: 1,
+    description: 'Same/Different 답변',
+    example: 'same',
     required: false,
   })
   @IsOptional()
@@ -29,8 +23,8 @@ export class UserQuestItemDto {
   userAnswerOx: string | null;
 
   @ApiProperty({
-    description: '사용자 답안 평서문/의문문',
-    example: 1,
+    description: '평서문/의문문 답변',
+    example: 'statement',
     required: false,
   })
   @IsOptional()
@@ -38,29 +32,61 @@ export class UserQuestItemDto {
   userAnswerSq: string | null;
 
   @ApiProperty({
-    description: '사용자 답안 인덱스',
-    example: 1,
+    description: '사용자 답안 (quest_item_unit_id)',
+    example: 13,
     required: false,
   })
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   userAnswer: number | null;
 
   @ApiProperty({
-    description: '사용자 학습 시도 시간(=문제 제출 시간)',
-    example: '2025-09-24T08:05:07.000Z',
+    description: '정답 여부',
+    example: true,
     required: false,
   })
-  @Type(() => Date)
-  @IsDate()
-  attemptAt: Date;
+  @IsOptional()
+  @IsBoolean()
+  correctYn: boolean;
 
   @ApiProperty({
-    description: '사용자 문제 JSON',
+    description: '소요 시간 (초)',
+    example: 30,
+    required: false,
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  timeSpent: number;
+
+  @ApiProperty({
+    description: '시도 횟수',
     example: 1,
     required: false,
   })
-  @IsString()
-  questItemJson: string;
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  attemptCount: number;
 
+  @ApiProperty({
+    description: '시작 시간',
+    example: '2025-09-24T08:05:07.000Z',
+    required: false,
+  })
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  startedAt: Date;
+
+  @ApiProperty({
+    description: '종료 시간',
+    example: '2025-09-24T08:05:37.000Z',
+    required: false,
+  })
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  endedAt: Date;
 }

@@ -65,6 +65,7 @@ CREATE TABLE IF NOT EXISTS `user_quest_items` (
   `user_answer` text DEFAULT NULL COMMENT '선택한 답변 or Same/Different 답변 or 평서문/의문문 답변',
   `correct_yn` tinyint DEFAULT NULL,
   `time_spent` int DEFAULT NULL,
+  `attempt_at` datetime DEFAULT NULL,
   `attempt_count` int DEFAULT '1',
   `started_at` datetime DEFAULT NULL,
   `ended_at` datetime DEFAULT NULL,
@@ -124,6 +125,7 @@ VALUES
 (10, 'statement', '도깨비', '/sounds/goblin.wav', '/sounds/goblin-slow.wav', NULL),
 (11, 'question', '모래사장', '/sounds/sandybeach.wav', '/sounds/sandybeach-slow.wav', NULL),
 (12, 'question', '미꾸라지', '/sounds/loach.wav', '/sounds/loach-slow.wav', NULL),
+
 (13, 'word', '미꾸라지', '/sounds/loach.wav', '/sounds/loach-slow.wav', NULL),
 (14, 'word', '도깨비', '/sounds/goblin.wav', '/sounds/goblin-slow.wav', NULL),
 (15, 'word', '모래사장', '/sounds/sandybeach.wav', '/sounds/sandybeach-slow.wav', NULL),
@@ -229,3 +231,4 @@ VALUES('code1', '환경음', 1),
 ('code9', '음향 패턴 다른', 9),
 ('code10', '음향 패턴 유사', 10),
 ('code11', '문장', 11);
+

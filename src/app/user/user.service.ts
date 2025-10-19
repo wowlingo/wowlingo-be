@@ -1,8 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, Repository } from 'typeorm';
-import { User } from './entities/user.entity';
-import { UserCourse } from './entities/user-course.entity';
+import { User } from './entities/user.entity'
 import { UserQuestAttempt } from './entities/user-quest-attempt.entity';
 
 @Injectable()
@@ -10,11 +9,9 @@ export class UserService {
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
-    @InjectRepository(UserCourse)
-    private userCourseRepository: Repository<UserCourse>,
     @InjectRepository(UserQuestAttempt)
     private userQuestAttemptRepository: Repository<UserQuestAttempt>,
-  ) { }
+  ) {}
 
   async findAll(): Promise<User[]> {
     return this.userRepository.find({
@@ -49,25 +46,7 @@ export class UserService {
   async remove(id: number): Promise<void> {
     await this.userRepository.delete(id);
   }
-
-  // 사용자의 코스 등록
-  async enrollCourse(userId: number, courseId: number): Promise<UserCourse> {
-    const userCourse = this.userCourseRepository.create({
-      userId,
-      courseId,
-      startedAt: new Date(),
-    } as Partial<UserCourse>);
-    return this.userCourseRepository.save(userCourse);
-  }
-
-  // 사용자의 코스 목록 조회
-  async getUserCourses(userId: number): Promise<UserCourse[]> {
-    return this.userCourseRepository.find({
-      where: { userId },
-      relations: ['course'],
-    });
-  }
-
+  
   async login(nickname: string): Promise<Boolean> {
     // 1. 이전에 접속한 적 있는 닉네임일 경우 -> 이어서 진행.
     // 2. 접속한 적 없는 닉네임일 경우 -> 신규 진행.

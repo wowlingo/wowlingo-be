@@ -18,16 +18,16 @@ export class UserQuestItem {
   questItemId: number;
 
   @Expose()
-  @Column({ name: 'user_answer_ox', type: 'varchar', length: 1, nullable: true, comment: 'O/X 답변' })
-  userAnswerOx: string | null;;
+  @Column({ name: 'user_answer_ox', type: 'varchar', length: 10, nullable: true, comment: 'Same/Different 답변' })
+  userAnswerOx: string | null;
 
   @Expose()
   @Column({ name: 'user_answer_sq', type: 'varchar', length: 10, nullable: true, comment: '평서문/의문문 답변' })
-  userAnswerSq: string | null;;
+  userAnswerSq: string | null;
 
   @Expose()
   @Column({ name: 'user_answer', type: 'bigint', nullable: true })
-  userAnswer: number | null;;
+  userAnswer: number | null;
 
   @Expose()
   @Column({ name: 'correct_yn', type: 'boolean', nullable: true })
@@ -36,14 +36,22 @@ export class UserQuestItem {
   @Expose()
   @Column({ name: 'attempt_at', type: 'datetime', nullable: true })
   attemptAt: Date;
-
+  
   @Expose()
-  @Column({ name: 'temp_spent', type: 'int', nullable: true })
+  @Column({ name: 'time_spent', type: 'int', nullable: true })
   timeSpent: number;
 
   @Expose()
-  @Column({ name: 'quest_item', type: 'json', nullable: true })
-  questItem: string | null;
+  @Column({ name: 'attempt_count', type: 'int', nullable: true, default: 1 })
+  attemptCount: number;
+
+  @Expose()
+  @Column({ name: 'started_at', type: 'datetime', nullable: true })
+  startedAt: Date;
+
+  @Expose()
+  @Column({ name: 'ended_at', type: 'datetime', nullable: true })
+  endedAt: Date;
 
   @ManyToOne(() => UserQuest, quest => quest.userQuestItems)
   @JoinColumn({ name: 'user_quest_id' })

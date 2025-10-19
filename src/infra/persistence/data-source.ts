@@ -6,8 +6,6 @@ config();
 
 // 엔티티 import
 import { User } from '../../app/user/entities/user.entity';
-import { UserCourse } from '../../app/user/entities/user-course.entity';
-import { Course } from '../../app/course/entities/course.entity';
 import { Quest } from '../../app/quest/entities/quest.entity';
 import { QuestItem } from '../../app/quest/entities/quest-item.entity';
 import { QuestItemUnit } from '../../app/quest/entities/quest-item-unit.entity';
@@ -29,8 +27,6 @@ export const AppDataSource = new DataSource({
   database: process.env.DB_DATABASE || 'wowlingo',
   entities: [
     User,
-    UserCourse,
-    Course,
     Quest,
     QuestItem,
     QuestItemUnit,
@@ -43,6 +39,10 @@ export const AppDataSource = new DataSource({
     Vocabulary,
     UserQuestAttempt,
   ],
+  charset: 'utf8mb4',
+  extra: {
+    charset: 'utf8mb4_unicode_ci',
+  },
   synchronize: process.env.NODE_ENV !== 'production',
   logging: process.env.NODE_ENV === 'development',
   migrations: ['src/infra/persistence/migrations/*.ts'],

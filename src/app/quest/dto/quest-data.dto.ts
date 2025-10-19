@@ -17,3 +17,4 @@ export class QuestDataDto {
   @Type(() => QuestItemDataDto)
   items: QuestItemDataDto[];
 }
+

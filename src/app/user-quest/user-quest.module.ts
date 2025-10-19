@@ -7,13 +7,13 @@ import { UserQuestItem } from './entities/user-quest-item.entity';
 import { Quest } from '../quest/entities/quest.entity';
 import { QuestItem } from '../quest/entities/quest-item.entity';
 import { QuestItemUnit } from '../quest/entities/quest-item-unit.entity'
-import { UserCourse } from '../user/entities/user-course.entity';
 import { HashtagModule } from '../hashtag/hashtag.module';
+import { User } from '../user/entities/user.entity';
 
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([UserQuest, UserQuestItem, Quest, QuestItem, QuestItemUnit, UserCourse]),
+        TypeOrmModule.forFeature([UserQuest, UserQuestItem, Quest, QuestItem, QuestItemUnit, User]),
         HashtagModule,
     ],
     controllers: [UserQuestController],

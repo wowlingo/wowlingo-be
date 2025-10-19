@@ -1,14 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany, Double } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 import { UserQuestItem } from './user-quest-item.entity';
-import { UserCourse } from '../../user/entities/user-course.entity'
+import { User } from '../../user/entities/user.entity';
 
 @Entity('user_quests')
 export class UserQuest {
     @PrimaryGeneratedColumn({ name: 'user_quest_id' })
     userQuestId: number;
-
-    @Column({ name: 'user_course_id', type: 'bigint' })
-    userCourseId: number;
 
     @Column({ name: 'user_id', type: 'bigint' })
     userId: number;
@@ -23,7 +20,7 @@ export class UserQuest {
     startedAt: Date;
 
     @Column({ name: 'ended_at', type: 'datetime', nullable: true })
-    endedAt: Date;
+    endedAt: Date | null;
 
     @Column({ name: 'time_spent', type: 'int', nullable: true })
     timeSpent: number | 0;
@@ -39,10 +36,9 @@ export class UserQuest {
     })
     accuracyRate: number;
 
-
-    @ManyToOne(() => UserCourse, userCourse => userCourse.userQuests)
-    @JoinColumn({ name: 'user_course_id' })
-    userCourse: UserCourse;
+    @ManyToOne(() => User, user => user.userQuests)
+    @JoinColumn({ name: 'user_id' })
+    user: User;
 
     @OneToMany(() => UserQuestItem, userQuestItem => userQuestItem.userQuest, {
         cascade: false,
