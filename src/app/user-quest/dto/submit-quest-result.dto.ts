@@ -32,7 +32,7 @@ export class SubmitQuestResultDto {
   timeSpent: number;
 
   @ApiProperty({
-    description: '퀘스트 완료 여부',
+    description: '퀘스트 완료 여부', // 50/70? 아니면 70/70?
     example: true,
     required: true,
   })

@@ -45,3 +45,4 @@ export class UserQuest {
     })
     userQuestItems: UserQuestItem[];
 }
+

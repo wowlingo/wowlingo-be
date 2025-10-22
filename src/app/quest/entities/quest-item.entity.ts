@@ -16,14 +16,11 @@ export class QuestItem {
   @Column({ name: 'has_answer', type: 'boolean', default: false, comment: '답변 여부' })
   hasAnswer: boolean;
 
-  @Column({ name: 'question1', type: 'bigint', nullable: true })
+  @Column({ name: 'question1', type: 'bigint', nullable: true }) // quest_item_unit의 id
   question1: number;
 
   @Column({ name: 'question2', type: 'bigint', nullable: true })
   question2: number;
-
-  @Column({ name: 'question3', type: 'bigint', nullable: true })
-  question3: number;
 
   @Column({ name: 'answer_ox', type: 'varchar', length: 10, nullable: true, comment: 'Same/Different 답변' })
   answerOx: string;
@@ -31,20 +28,12 @@ export class QuestItem {
   @Column({ name: 'answer_sq', type: 'varchar', length: 10, nullable: true, comment: '평서문/의문문 답변' })
   answerSq: string;
 
+  // [TODO] answer1,2에 question의 값이 들어있어야 할까? 따로 string으로 들고 있으면? 선지도 문제의 일부?
   @Column({ name: 'answer1', type: 'bigint', nullable: true })
   answer1: number;
 
   @Column({ name: 'answer2', type: 'bigint', nullable: true })
   answer2: number;
-
-  @Column({ name: 'answer3', type: 'bigint', nullable: true })
-  answer3: number;
-
-  @Column({ name: 'answer4', type: 'bigint', nullable: true })
-  answer4: number;
-
-  @Column({ name: 'answer5', type: 'bigint', nullable: true })
-  answer5: number;
 
   @Column({ name: 'remark', type: 'text', nullable: true, comment: '메모' })
   remark: string;
