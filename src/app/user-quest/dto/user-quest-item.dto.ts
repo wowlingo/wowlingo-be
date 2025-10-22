@@ -15,13 +15,12 @@ export class UserQuestItemDto {
 
   @ApiProperty({
     description: '사용자 답안(선택한 답변 or Same/Different 답변 or 평서문/의문문 답변)',
-    example: 13,
+    example: '13',
     required: false,
   })
-  @IsOptional()
   @Type(() => Text)
   @IsString()
-  userAnswer: string | null;
+  userAnswer: string;
 
   @ApiProperty({
     description: '정답 여부',
