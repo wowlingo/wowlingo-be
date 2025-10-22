@@ -132,13 +132,9 @@ export class UserQuestService {
     ): Promise<{ userQuest: UserQuest; userQuestItems: UserQuestItem[] }> {
         // 1. 항상 새로운 UserQuest 생성
         const userQuest = await this.createNewUserQuest(userId, questId, startedAt, endedAt, timeSpent, totalQuestItemCount, correctQuestItemCount, accuracyRate);
-        // [TODO] doneYn 계산하기(50/70)
-        // [TODO] uesrQuest에서 전체 개수 중 맞힌 개수 계산해야하는데, quest 전체에서 계산하는 것과, 한 quest에서 나온 것 어떻게 구분하지?
-        // userQuest - 문제 낼 때 이미 맞힌 건 다시 안 나감.. -> 문제 다 떨어지면 다시 처음부터 랜덤 반환
         
         // 2. 모든 아이템 결과 저장
         const savedItems: UserQuestItem[] = [];
-        // [TODO] user-quest-item에 attempt를 이전 것에서부터 +1 해서 저장하기
         
         for (const itemData of items) {
 
@@ -262,12 +258,27 @@ export class UserQuestService {
 
         const attemptCount = previousAttempts?.maxAttempt ? previousAttempts.maxAttempt + 1 : 1;
 
+        // 문제 정보 조회하여 정답 검증
+        const questItem = await this.questItemRepository.findOne({
+            where: {
+                questId: userQuest.questId,
+                questItemId: itemData.questItemId
+            }
+        });
+
+        if (!questItem) {
+            throw new NotFoundException(`Quest item ${itemData.questItemId} not found`);
+        }
+
+        // 서버에서 정답 검증
+        const correctYn = this.validateAnswer(questItem, itemData.userAnswer || '');
+
         // 항상 새로운 UserQuestItem 생성 (userQuest가 매번 새로 생성되므로)
         const newUserQuestItem = this.userQuestItemRepository.create({
             userQuestId: userQuest.userQuestId,
             questItemId: itemData.questItemId,
             userAnswer: itemData.userAnswer,
-            correctYn: itemData.correctYn,
+            correctYn: correctYn,
             timeSpent: itemData.timeSpent,
             attemptCount: attemptCount,
             startedAt: itemData.startedAt || new Date(),
@@ -276,6 +287,38 @@ export class UserQuestService {
 
         const savedItem = await this.userQuestItemRepository.save(newUserQuestItem);
         return savedItem;
+    }
+
+    private validateAnswer(questItem: QuestItem, userAnswer: string): boolean {
+        if (!userAnswer) {
+            return false;
+        }
+
+        // 1. statement-question 타입: answer_sq와 비교
+        if (questItem.answerSq) {
+            return userAnswer.toLowerCase() === questItem.answerSq.toLowerCase();
+        }
+
+        // 2. same-different 타입: answer_ox와 비교
+        if (questItem.answerOx) {
+            return userAnswer.toLowerCase() === questItem.answerOx.toLowerCase();
+        }
+
+        // 3. choice 타입: question과 answer 중 일치하는 것이 정답
+        // userAnswer는 questItemUnitId일 것으로 예상
+        const userAnswerId = Number(userAnswer);
+        if (isNaN(userAnswerId)) {
+            return false;
+        }
+
+        // question1, question2와 answer1, answer2 비교
+        const questions = [questItem.question1, questItem.question2].filter(q => q !== null);
+        const answers = [questItem.answer1, questItem.answer2].filter(a => a !== null && a !== -1);
+
+        // 정답: question과 answer에 모두 포함된 ID
+        const correctAnswerId = questions.find(q => answers.includes(q));
+
+        return userAnswerId === correctAnswerId;
     }
 
     private async updateUserQuestProgress(userId: number, questId: number): Promise<void> {

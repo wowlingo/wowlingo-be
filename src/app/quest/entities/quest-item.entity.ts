@@ -16,27 +16,27 @@ export class QuestItem {
   @Column({ name: 'has_answer', type: 'boolean', default: false, comment: '답변 여부' })
   hasAnswer: boolean;
 
-  @Column({ name: 'question1', type: 'bigint', nullable: true }) // quest_item_unit의 id
+  @Column({ name: 'question1', type: 'bigint' }) // quest_item_unit의 id
   question1: number;
 
   @Column({ name: 'question2', type: 'bigint', nullable: true })
-  question2: number;
+  question2: number | null;
 
   @Column({ name: 'answer_ox', type: 'varchar', length: 10, nullable: true, comment: 'Same/Different 답변' })
-  answerOx: string;
+  answerOx: string | null;
 
   @Column({ name: 'answer_sq', type: 'varchar', length: 10, nullable: true, comment: '평서문/의문문 답변' })
-  answerSq: string;
+  answerSq: string | null;
 
   // [TODO] answer1,2에 question의 값이 들어있어야 할까? 따로 string으로 들고 있으면? 선지도 문제의 일부?
   @Column({ name: 'answer1', type: 'bigint', nullable: true })
-  answer1: number;
+  answer1: number | null;
 
   @Column({ name: 'answer2', type: 'bigint', nullable: true })
-  answer2: number;
+  answer2: number | null;
 
   @Column({ name: 'remark', type: 'text', nullable: true, comment: '메모' })
-  remark: string;
+  remark: string | null;
 
   @ManyToOne(() => Quest, quest => quest.questItems)
   @JoinColumn({ name: 'quest_id' })

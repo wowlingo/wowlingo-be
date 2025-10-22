@@ -58,7 +58,7 @@ export class UserQuestController {
 
         if (!date) date = new Date();
         const questItemUnits = await this.userQuestService.getQuestItemsByCorrectYnAndAttemptAt(userId, false, date);
-        const ids = questItemUnits.flatMap(it => [it.question1, it.question2]).filter(Boolean);
+        const ids = questItemUnits.flatMap(it => [it.question1, it.question2]).filter((id): id is number => id !== null);
         const hashtags = await this.hashtagService.findAllByQuestItemUnitIds(ids);
 
         return BaseResponse.success(hashtags, '해시태그 조회 성공.');

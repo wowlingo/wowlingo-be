@@ -166,9 +166,9 @@ export class QuestService {
           break;
         case 'choice':
           // answer unit ids로 선택지 구성
-          const answerIds = [item.answer1, item.answer2].filter(a => a);
+          const answerIds = [item.answer1, item.answer2].filter((a): a is number => a !== null);
           questItemDataDto.options = answerIds.map(answerId => {
-            const unit = questUnitMap.get(Number(answerId));
+            const unit = questUnitMap.get(answerId);
             return {
               id: answerId,
               label: unit?.str || '',
@@ -177,7 +177,7 @@ export class QuestService {
           });
 
           // question id들 중에서 answer id들과 일치하는 것을 찾기 (정답)
-          const questions = [item.question1, item.question2].filter(q => q);
+          const questions = [item.question1, item.question2].filter((q): q is number => q !== null);
           const correctAnswer = questions.find(q => answerIds.includes(q));
           questItemDataDto.answer = correctAnswer || null;
           break;
@@ -269,9 +269,9 @@ export class QuestService {
           break;
         case 'choice':
           // answer unit ids로 선택지 구성
-          const answerIds = [item.answer1, item.answer2].filter(a => a);
+          const answerIds = [item.answer1, item.answer2].filter((a): a is number => a !== null);
           questItemDataDto.options = answerIds.map(answerId => {
-            const unit = questUnitMap.get(Number(answerId));
+            const unit = questUnitMap.get(answerId);
             return {
               id: answerId,
               label: unit?.str || '',
@@ -280,7 +280,7 @@ export class QuestService {
           });
           
           // question id들 중에서 answer id들과 일치하는 것을 찾기 (정답)
-          const questions = [item.question1, item.question2].filter(q => q);
+          const questions = [item.question1, item.question2].filter((q): q is number => q !== null);
           const correctAnswer = questions.find(q => answerIds.includes(q));
           questItemDataDto.answer = correctAnswer || null;
           break;
