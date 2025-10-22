@@ -13,38 +13,9 @@ export class UserService {
     private userQuestAttemptRepository: Repository<UserQuestAttempt>,
   ) {}
 
-  async findAll(): Promise<User[]> {
-    return this.userRepository.find({
-      relations: ['userCourses'],
-    });
-  }
-
-  async findOne(id: number): Promise<User> {
-    return this.userRepository.findOneOrFail({
-      where: { userId: id },
-      relations: ['userCourses'],
-    });
-  }
-
-  async findByNickname(nickname: string): Promise<User> {
-    return this.userRepository.findOneOrFail({
-      where: { nickname },
-      relations: ['userCourses'],
-    });
-  }
-
   async create(userData: Partial<User>): Promise<User> {
     const user = this.userRepository.create(userData);
     return this.userRepository.save(user);
-  }
-
-  async update(id: number, userData: Partial<User>): Promise<User> {
-    await this.userRepository.update(id, userData);
-    return this.findOne(id);
-  }
-
-  async remove(id: number): Promise<void> {
-    await this.userRepository.delete(id);
   }
   
   async login(nickname: string): Promise<Boolean> {
