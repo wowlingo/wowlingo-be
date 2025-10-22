@@ -72,6 +72,24 @@ CREATE TABLE IF NOT EXISTS `user_quest_items` (
   PRIMARY KEY (`user_quest_item_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `user_quest_progress` (
+  `user_quest_progress_id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `quest_id` int NOT NULL,
+  `total_target_count` int NOT NULL DEFAULT 70 COMMENT '목표 문제 수 (70개)',
+  `pass_threshold` int NOT NULL DEFAULT 50 COMMENT '통과 기준 (50개)',
+  `correct_count` int NOT NULL DEFAULT 0 COMMENT '맞힌 문제 수',
+  `done_yn` tinyint NOT NULL DEFAULT 0 COMMENT '50개 이상 맞혔는지 여부',
+  `last_played_at` datetime DEFAULT NULL,
+  `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  PRIMARY KEY (`user_quest_progress_id`),
+  UNIQUE KEY `unique_user_quest` (`user_id`, `quest_id`)  -- 한 유저당 한 퀘스트 1개만!
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE INDEX idx_user_quest_items_lookup 
+  ON user_quest_items(user_quest_id, quest_item_id, correct_yn);
+
 -- ============================================
 -- 샘플 데이터 삽입
 -- ============================================
