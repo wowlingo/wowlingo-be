@@ -23,6 +23,15 @@ export class UserQuestItemDto {
   userAnswer: string;
 
   @ApiProperty({
+    description: '사용자 답안 텍스트 (choice 타입일 때 questItemUnit의 str)',
+    example: 'Hello',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  userAnswerText?: string;
+
+  @ApiProperty({
     description: '정답 여부',
     example: true,
     required: false,

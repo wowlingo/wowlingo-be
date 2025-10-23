@@ -121,7 +121,8 @@ export class QuestService {
         item.question1, item.question2,
         item.answer1, item.answer2,
       ])
-      .filter(id => id);
+      .filter((id): id is number => id !== null);
+
     const questUnits = await this.questItemUnitRepository.findBy({ questItemUnitId: In(questUnitIds) });
     const questUnitMap = new Map(questUnits.map(unit => [unit.questItemUnitId, unit]));
 
@@ -167,10 +168,13 @@ export class QuestService {
         case 'choice':
           // answer unit ids로 선택지 구성
           const answerIds = [item.answer1, item.answer2].filter((a): a is number => a !== null);
+          console.log('answerIds for item:', answerIds);
           questItemDataDto.options = answerIds.map(answerId => {
-            const unit = questUnitMap.get(answerId);
+            // bigint는 문자열로 반환되므로 Number로 변환
+            const numericAnswerId = Number(answerId);
+            const unit = questUnitMap.get(numericAnswerId);
             return {
-              id: answerId,
+              id: numericAnswerId,
               label: unit?.str || '',
               type: unit?.type || '',
             };
@@ -271,9 +275,11 @@ export class QuestService {
           // answer unit ids로 선택지 구성
           const answerIds = [item.answer1, item.answer2].filter((a): a is number => a !== null);
           questItemDataDto.options = answerIds.map(answerId => {
-            const unit = questUnitMap.get(answerId);
+            // bigint는 문자열로 반환되므로 Number로 변환
+            const numericAnswerId = Number(answerId);
+            const unit = questUnitMap.get(numericAnswerId);
             return {
-              id: answerId,
+              id: numericAnswerId,
               label: unit?.str || '',
               type: unit?.type || '',
             };

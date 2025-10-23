@@ -150,7 +150,35 @@ export class UserQuestService {
         // 3. user_quest_progress 업데이트 (누적 맞힌 문제 수 계산)
         await this.updateUserQuestProgress(userId, questId);
 
-        // 4. 생성된 userQuest 재조회 (userQuestItems 포함)
+        // 4. choice 타입의 경우 userAnswerText 추가
+        const enrichedItems = await Promise.all(
+            savedItems.map(async (item) => {
+                // questItem 조회
+                const questItem = await this.questItemRepository.findOne({
+                    where: { questItemId: item.questItemId }
+                });
+
+                let userAnswerText: string | undefined = undefined;
+
+                // choice 타입이고 userAnswer가 있으면 questItemUnit 조회
+                if (questItem?.type === 'choice' && item.userAnswer) {
+                    const unitId = Number(item.userAnswer);
+                    if (!isNaN(unitId)) {
+                        const unit = await this.questItemUnitRepository.findOne({
+                            where: { questItemUnitId: unitId }
+                        });
+                        userAnswerText = unit?.str;
+                    }
+                }
+
+                return {
+                    ...item,
+                    userAnswerText
+                } as any;
+            })
+        );
+
+        // 5. 생성된 userQuest 재조회 (userQuestItems 포함)
         const completeUserQuest = await this.userQuestRepository.findOne({
             where: { userQuestId: userQuest.userQuestId },
             relations: ['userQuestItems']
@@ -158,7 +186,7 @@ export class UserQuestService {
 
         return {
             userQuest: completeUserQuest || userQuest,
-            userQuestItems: savedItems,
+            userQuestItems: enrichedItems,
         };
     }
 
