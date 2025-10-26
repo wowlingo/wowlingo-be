@@ -13,9 +13,6 @@ export class UserQuest {
     @Column({ name: 'quest_id', type: 'bigint' })
     questId: number;
 
-    @Column({ name: 'done_yn', type: 'boolean', nullable: false })
-    doneYn: boolean;
-
     @Column({ name: 'started_at', type: 'datetime', nullable: false })
     startedAt: Date;
 

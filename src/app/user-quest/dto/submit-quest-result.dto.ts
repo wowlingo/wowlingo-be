@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsDate, IsNumber, IsOptional, ValidateNested } from 'class-validator';
+import { IsArray, IsDate, IsNumber, ValidateNested } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { UserQuestItemDto } from './user-quest-item.dto';
 
@@ -30,14 +30,6 @@ export class SubmitQuestResultDto {
   @Type(() => Number)
   @IsNumber()
   timeSpent: number;
-
-  @ApiProperty({
-    description: '퀘스트 완료 여부', // [TODO] 언제 필요한지 고려해보기
-    example: true,
-    required: true,
-  })
-  @IsBoolean()
-  doneYn: boolean;
 
   @ApiProperty({
     description: '총 문제 수',

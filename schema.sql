@@ -48,7 +48,6 @@ CREATE TABLE IF NOT EXISTS `user_quests` (
   `user_quest_id` int NOT NULL AUTO_INCREMENT,
   `user_id` int NOT NULL,
   `quest_id` bigint NOT NULL,
-  `done_yn` tinyint NOT NULL DEFAULT '0',
   `started_at` datetime NOT NULL,
   `ended_at` datetime DEFAULT NULL,
   `time_spent` int DEFAULT NULL,
