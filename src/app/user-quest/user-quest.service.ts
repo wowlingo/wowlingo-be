@@ -153,28 +153,32 @@ export class UserQuestService {
         // 4. choice 타입의 경우 userAnswerText 추가
         const enrichedItems = await Promise.all(
             savedItems.map(async (item) => {
-                // questItem 조회
-                const questItem = await this.questItemRepository.findOne({
-                    where: { questItemId: item.questItemId }
-                });
+                try {
+                    // questItem 조회
+                    const questItem = await this.questItemRepository.findOne({
+                        where: { questItemId: item.questItemId }
+                    });
 
-                let userAnswerText: string | undefined = undefined;
+                    let userAnswerText: string | undefined = undefined;
 
-                // choice 타입이고 userAnswer가 있으면 questItemUnit 조회
-                if (questItem?.type === 'choice' && item.userAnswer) {
-                    const unitId = Number(item.userAnswer);
-                    if (!isNaN(unitId)) {
-                        const unit = await this.questItemUnitRepository.findOne({
-                            where: { questItemUnitId: unitId }
-                        });
-                        userAnswerText = unit?.str;
+                    // choice 타입이고 userAnswer가 있으면 questItemUnit 조회
+                    if (questItem?.type === 'choice' && item.userAnswer) {
+                        const unitId = Number(item.userAnswer);
+                        if (!isNaN(unitId)) {
+                            const unit = await this.questItemUnitRepository.findOne({
+                                where: { questItemUnitId: unitId }
+                            });
+                            userAnswerText = unit?.str;
+                        }
                     }
-                }
 
-                return {
-                    ...item,
-                    userAnswerText
-                } as any;
+                    return {
+                        ...item,
+                        userAnswerText
+                    } as any;
+                } catch (error) {
+                    throw error;
+                }
             })
         );
 

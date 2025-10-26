@@ -128,6 +128,7 @@ export class QuestService {
 
     questDataDto.items = selectedItems.map(item => {
       const questItemDataDto = new QuestItemDataDto();
+      questItemDataDto.questItemId = item.questItemId;
 
       const units = [item.question1, item.question2,]
         .filter(id => id)
@@ -234,6 +235,7 @@ export class QuestService {
 
     questDataDto.items = randomQuestItems.map(item => {
       const questItemDataDto = new QuestItemDataDto();
+      questItemDataDto.questItemId = item.questItemId;
 
       const units = [item.question1, item.question2,]
         .filter(id => id)

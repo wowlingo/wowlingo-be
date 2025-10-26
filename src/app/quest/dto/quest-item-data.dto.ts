@@ -9,6 +9,8 @@ export class OptionDto {
 }
 
 export class QuestItemDataDto {
+  questItemId: number;
+
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => SoundDto)
