@@ -18,7 +18,7 @@ export class UserQuestItemDto {
     example: '13',
     required: false,
   })
-  @Type(() => Text)
+  @Type(() => String)
   @IsString()
   userAnswer: string;
 
