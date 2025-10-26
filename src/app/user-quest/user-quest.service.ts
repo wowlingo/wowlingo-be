@@ -113,6 +113,9 @@ export class UserQuestService {
             'intonation': ['#낱말 검사'],
             'word_length': ['#낱말 검사'],
             'sentence_length': ['#낱말 검사'],
+            'statement-question': ['#평서문/의문문'],
+            'same-different': ['#같은/다른'],
+            'choice': ['#선택'],
             // 다른 타입들도 추가 가능
         };
 
@@ -129,7 +132,7 @@ export class UserQuestService {
         totalQuestItemCount: number,
         correctQuestItemCount: number,
         accuracyRate: number
-    ): Promise<{ userQuest: UserQuest; userQuestItems: UserQuestItem[] }> {
+    ): Promise<{ userQuest: UserQuest & { userQuestItems: any[] } }> {
         // 1. 항상 새로운 UserQuest 생성
         const userQuest = await this.createNewUserQuest(userId, questId, startedAt, endedAt, timeSpent, totalQuestItemCount, correctQuestItemCount, accuracyRate);
         
@@ -182,15 +185,12 @@ export class UserQuestService {
             })
         );
 
-        // 5. 생성된 userQuest 재조회 (userQuestItems 포함)
-        const completeUserQuest = await this.userQuestRepository.findOne({
-            where: { userQuestId: userQuest.userQuestId },
-            relations: ['userQuestItems']
-        });
-
+        // 5. userQuest에 enrichedItems 추가해서 반환
         return {
-            userQuest: completeUserQuest || userQuest,
-            userQuestItems: enrichedItems,
+            userQuest: {
+                ...userQuest,
+                userQuestItems: enrichedItems
+            },
         };
     }
 
@@ -322,35 +322,71 @@ export class UserQuestService {
     }
 
     private validateAnswer(questItem: QuestItem, userAnswer: string): boolean {
+        console.log('=== validateAnswer ===');
+        console.log('questItemId:', questItem.questItemId);
+        console.log('questItem.type:', questItem.type);
+        console.log('userAnswer:', userAnswer, 'type:', typeof userAnswer);
+
         if (!userAnswer) {
+            console.log('userAnswer is empty, returning false');
             return false;
         }
 
-        // 1. statement-question 타입: answer_sq와 비교
-        if (questItem.answerSq) {
-            return userAnswer.toLowerCase() === questItem.answerSq.toLowerCase();
+        // type 필드를 기준으로 검증 (answerSq, answerOx는 다른 용도로 사용될 수 있음)
+        if (questItem.type === 'statement-question') {
+            // statement-question 타입: answer_sq와 비교
+            const result = userAnswer.toLowerCase() === (questItem.answerSq?.toLowerCase() || '');
+            console.log('statement-question type, answerSq:', questItem.answerSq, 'result:', result);
+            return result;
         }
 
-        // 2. same-different 타입: answer_ox와 비교
-        if (questItem.answerOx) {
-            return userAnswer.toLowerCase() === questItem.answerOx.toLowerCase();
+        if (questItem.type === 'same-different') {
+            // same-different 타입: answer_ox와 비교
+            const result = userAnswer.toLowerCase() === (questItem.answerOx?.toLowerCase() || '');
+            console.log('same-different type, answerOx:', questItem.answerOx, 'result:', result);
+            return result;
         }
 
-        // 3. choice 타입: question과 answer 중 일치하는 것이 정답
-        // userAnswer는 questItemUnitId일 것으로 예상
-        const userAnswerId = Number(userAnswer);
-        if (isNaN(userAnswerId)) {
-            return false;
+        if (questItem.type === 'choice') {
+            // choice 타입: question과 answer 중 일치하는 것이 정답
+            const userAnswerId = Number(userAnswer);
+            console.log('choice type, userAnswerId:', userAnswerId);
+
+            if (isNaN(userAnswerId)) {
+                console.log('userAnswerId is NaN, returning false');
+                return false;
+            }
+
+            // question1, question2와 answer1, answer2 비교 (bigint는 Number로 변환)
+            console.log('questItem.question1:', questItem.question1, 'type:', typeof questItem.question1);
+            console.log('questItem.question2:', questItem.question2, 'type:', typeof questItem.question2);
+            console.log('questItem.answer1:', questItem.answer1, 'type:', typeof questItem.answer1);
+            console.log('questItem.answer2:', questItem.answer2, 'type:', typeof questItem.answer2);
+
+            const questions = [questItem.question1, questItem.question2]
+                .filter(q => q !== null)
+                .map(q => Number(q));
+            const answers = [questItem.answer1, questItem.answer2]
+                .filter(a => a !== null && a !== -1)
+                .map(a => Number(a));
+
+            console.log('questions:', questions);
+            console.log('answers:', answers);
+
+            // 정답: question과 answer에 모두 포함된 ID
+            const correctAnswerId = questions.find(q => answers.includes(q));
+            console.log('correctAnswerId:', correctAnswerId);
+
+            const result = userAnswerId === correctAnswerId;
+            console.log('validation result:', result);
+            console.log('======================');
+
+            return result;
         }
 
-        // question1, question2와 answer1, answer2 비교
-        const questions = [questItem.question1, questItem.question2].filter(q => q !== null);
-        const answers = [questItem.answer1, questItem.answer2].filter(a => a !== null && a !== -1);
-
-        // 정답: question과 answer에 모두 포함된 ID
-        const correctAnswerId = questions.find(q => answers.includes(q));
-
-        return userAnswerId === correctAnswerId;
+        console.log('Unknown type:', questItem.type);
+        console.log('======================');
+        return false;
     }
 
     private async updateUserQuestProgress(userId: number, questId: number): Promise<void> {

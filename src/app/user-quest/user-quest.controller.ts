@@ -3,7 +3,6 @@ import { ParseDatePipe } from 'src/common/pipes/parse-date.pipe';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { BaseResponse } from '../../common/dto/base-response.dto';
 import { UserQuest } from './entities/user-quest.entity';
-import { UserQuestItem } from './entities/user-quest-item.entity';
 import { SubmitQuestResultDto } from './dto/submit-quest-result.dto'
 import { HashtagService } from '../hashtag/hashtag.service';
 import { Hashtag } from '../hashtag/entities/hashtag.entity';
@@ -26,7 +25,7 @@ export class UserQuestController {
         @Param('userId', ParseIntPipe) userId: number,
         @Param('questId', ParseIntPipe) questId: number,
         @Body() resultData: SubmitQuestResultDto)
-        : Promise<BaseResponse<{ userQuest: UserQuest; userQuestItems: UserQuestItem[] }>> {
+        : Promise<BaseResponse<{ userQuest: UserQuest & { userQuestItems: any[] } }>> {
         const result = await this.userQuestService.submitQuestResult(
             userId,
             questId,
