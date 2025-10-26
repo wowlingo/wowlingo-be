@@ -158,14 +158,38 @@ export class QuestService {
             { type: 'question', label: '의문문' },
           ];
           questItemDataDto.answer = item.answerSq;
+
+          // answerDetail 생성
+          const sqQuestionUnits = [item.question1, item.question2]
+            .filter((id): id is number => id !== null)
+            .map(id => questUnitMap.get(Number(id))?.str)
+            .filter((str): str is string => str !== undefined);
+          questItemDataDto.answerDetail = {
+            type: item.answerSq || 'statement',
+            label: item.answerSq === 'statement' ? '평서문' : '의문문',
+            units: sqQuestionUnits
+          };
           break;
+
         case 'same-different':
           questItemDataDto.options = [
             { type: 'same', label: '같아요' },
             { type: 'different', label: '달라요' },
           ];
           questItemDataDto.answer = item.answerOx;
+
+          // answerDetail 생성
+          const sdQuestionUnits = [item.question1, item.question2]
+            .filter((id): id is number => id !== null)
+            .map(id => questUnitMap.get(Number(id))?.str)
+            .filter((str): str is string => str !== undefined);
+          questItemDataDto.answerDetail = {
+            type: item.answerOx || 'same',
+            label: item.answerOx === 'same' ? 'O' : 'X',
+            units: sdQuestionUnits
+          };
           break;
+
         case 'choice':
           // answer unit ids로 선택지 구성
           const answerIds = [item.answer1, item.answer2].filter((a): a is number => a !== null);
@@ -185,9 +209,23 @@ export class QuestService {
           const questions = [item.question1, item.question2].filter((q): q is number => q !== null);
           const correctAnswer = questions.find(q => answerIds.includes(q));
           questItemDataDto.answer = correctAnswer || null;
+
+          // answerDetail 생성
+          const correctAnswerUnit = correctAnswer ? questUnitMap.get(Number(correctAnswer)) : null;
+          questItemDataDto.answerDetail = {
+            type: String(correctAnswer || ''),
+            label: correctAnswerUnit?.str || '',
+            units: correctAnswerUnit ? [correctAnswerUnit.str] : []
+          };
           break;
+
         default:
           questItemDataDto.answer = null;
+          questItemDataDto.answerDetail = {
+            type: '',
+            label: '',
+            units: []
+          };
           break;
       }
       return questItemDataDto;
@@ -265,14 +303,38 @@ export class QuestService {
             { type: 'question', label: '의문문' },
           ];
           questItemDataDto.answer = item.answerSq;
+
+          // answerDetail 생성
+          const sqQuestionUnits = [item.question1, item.question2]
+            .filter((id): id is number => id !== null)
+            .map(id => questUnitMap.get(Number(id))?.str)
+            .filter((str): str is string => str !== undefined);
+          questItemDataDto.answerDetail = {
+            type: item.answerSq || 'statement',
+            label: item.answerSq === 'statement' ? '평서문' : '의문문',
+            units: sqQuestionUnits
+          };
           break;
+
         case 'same-different':
           questItemDataDto.options = [
             { type: 'same', label: '같아요' },
             { type: 'different', label: '달라요' },
           ];
           questItemDataDto.answer = item.answerOx;
+
+          // answerDetail 생성
+          const sdQuestionUnits = [item.question1, item.question2]
+            .filter((id): id is number => id !== null)
+            .map(id => questUnitMap.get(Number(id))?.str)
+            .filter((str): str is string => str !== undefined);
+          questItemDataDto.answerDetail = {
+            type: item.answerOx || 'same',
+            label: item.answerOx === 'same' ? 'O' : 'X',
+            units: sdQuestionUnits
+          };
           break;
+
         case 'choice':
           // answer unit ids로 선택지 구성
           const answerIds = [item.answer1, item.answer2].filter((a): a is number => a !== null);
@@ -286,14 +348,28 @@ export class QuestService {
               type: unit?.type || '',
             };
           });
-          
+
           // question id들 중에서 answer id들과 일치하는 것을 찾기 (정답)
           const questions = [item.question1, item.question2].filter((q): q is number => q !== null);
           const correctAnswer = questions.find(q => answerIds.includes(q));
           questItemDataDto.answer = correctAnswer || null;
+
+          // answerDetail 생성
+          const correctAnswerUnit = correctAnswer ? questUnitMap.get(Number(correctAnswer)) : null;
+          questItemDataDto.answerDetail = {
+            type: String(correctAnswer || ''),
+            label: correctAnswerUnit?.str || '',
+            units: correctAnswerUnit ? [correctAnswerUnit.str] : []
+          };
           break;
+
         default:
           questItemDataDto.answer = null;
+          questItemDataDto.answerDetail = {
+            type: '',
+            label: '',
+            units: []
+          };
           break;
       }
       return questItemDataDto;
