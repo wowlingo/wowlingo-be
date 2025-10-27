@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS `quest_items` (
   `answer2` bigint DEFAULT NULL COMMENT 'quest_item_unit 중 한가지의 id, question과 동일한 값이 있어야함',
   `answer_sq` varchar(10) DEFAULT NULL COMMENT '평서문/의문문 답변',
   `answer_ox` varchar(10) DEFAULT NULL COMMENT 'Same/Different 답변',
+  `remark` text DEFAULT NULL COMMENT '비고',
   PRIMARY KEY (`quest_item_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -47,7 +48,6 @@ CREATE TABLE IF NOT EXISTS `user_quests` (
   `user_quest_id` int NOT NULL AUTO_INCREMENT,
   `user_id` int NOT NULL,
   `quest_id` bigint NOT NULL,
-  `done_yn` tinyint NOT NULL DEFAULT '0',
   `started_at` datetime NOT NULL,
   `ended_at` datetime DEFAULT NULL,
   `time_spent` int DEFAULT NULL,
@@ -72,6 +72,24 @@ CREATE TABLE IF NOT EXISTS `user_quest_items` (
   PRIMARY KEY (`user_quest_item_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `user_quest_progress` (
+  `user_quest_progress_id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `quest_id` int NOT NULL,
+  `total_target_count` int NOT NULL DEFAULT 70 COMMENT '목표 문제 수 (70개)',
+  `pass_threshold` int NOT NULL DEFAULT 50 COMMENT '통과 기준 (50개)',
+  `correct_count` int NOT NULL DEFAULT 0 COMMENT '맞힌 문제 수',
+  `done_yn` tinyint NOT NULL DEFAULT 0 COMMENT '50개 이상 맞혔는지 여부',
+  `last_played_at` datetime DEFAULT NULL,
+  `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  PRIMARY KEY (`user_quest_progress_id`),
+  UNIQUE KEY `unique_user_quest` (`user_id`, `quest_id`)  -- 한 유저당 한 퀘스트 1개만!
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE INDEX idx_user_quest_items_lookup 
+  ON user_quest_items(user_quest_id, quest_item_id, correct_yn);
+
 -- ============================================
 -- 샘플 데이터 삽입
 -- ============================================
@@ -85,29 +103,28 @@ VALUES
 
 
 INSERT INTO wowlingo.quest_items
-(quest_id, `type`, has_answer, question1, question2, question3, answer1, answer2, answer4, answer3, answer5, answer_sq, answer_ox, quest_item_id)
+(quest_id, `type`, has_answer, question1, question2, answer1, answer2, answer_sq, answer_ox, quest_item_id)
 VALUES
-(1, 'string', 1, 1, NULL, NULL, 1, -1, NULL, NULL, NULL, 'statement', NULL, 1),
-(1, 'string', 1, 2, NULL, NULL, -1, 2, NULL, NULL, NULL, 'question', NULL, 2),
-(1, 'string', 1, 3, NULL, NULL, 3, -1, NULL, NULL, NULL, 'statement', NULL, 3),
-(1, 'string', 1, 4, NULL, NULL, 4, -1, NULL, NULL, NULL, 'statement', NULL, 4),
-(1, 'string', 1, 5, NULL, NULL, -1, 5, NULL, NULL, NULL, 'question', NULL, 5),
-(1, 'string', 1, 6, NULL, NULL, -1, 6, NULL, NULL, NULL, 'question', NULL, 6),
-(1, 'string', 1, 7, NULL, NULL, 7, -1, NULL, NULL, NULL, 'statement', NULL, 7),
-(1, 'string', 1, 8, NULL, NULL, -1, 8, NULL, NULL, NULL, 'question', NULL, 8),
-(1, 'string', 1, 9, NULL, NULL, 9, -1, NULL, NULL, NULL, 'statement', NULL, 9),
-(1, 'string', 1, 10, NULL, NULL, 10, -1, NULL, NULL, NULL, 'statement', NULL, 10),
-(1, 'string', 1, 11, NULL, NULL, -1, 11, NULL, NULL, NULL, 'question', NULL, 11),
-(1, 'string', 1, 12, NULL, NULL, -1, 12, NULL, NULL, NULL, 'question', NULL, 12),
-(2, 'choice', 1, 13, NULL, NULL, 13, 14, NULL, NULL, NULL, 'word', NULL, 13), -- question과 answer가 같으면 정답
-(2, 'choice', 1, 14, NULL, NULL, 14, 17, NULL, NULL, NULL, 'word', NULL, 14),
-(2, 'choice', 1, 15, NULL, NULL, 22, 15, NULL, NULL, NULL, 'word', NULL, 15),
-(2, 'choice', 1, 16, NULL, NULL, 16, 21, NULL, NULL, NULL, 'sentence', NULL, 16),
-(2, 'choice', 1, 17, NULL, NULL, 24, 17, NULL, NULL, NULL, 'sentence', NULL, 17),
-(3, 'same-different', 0, 18, 14, NULL, 18, -1, NULL, NULL, NULL, NULL, 'different', 18),
--- 들려줄 때 18 14를 연속으로 들려줘야 함? quest_item_id가 question과 answer에 들어가는게 여기서는 이상함
-(3, 'same-different', 0, 19, 19, NULL, 19, -1, NULL, NULL, NULL, NULL, 'same', 19),
-(3, 'same-different', 0, 20, 20, NULL, -1, 20, NULL, NULL, NULL, NULL, 'same', 20);
+(1, 'string', 1, 1, NULL, 1, -1, 'statement', NULL, 1),
+(1, 'string', 1, 2, NULL, -1, 2, 'question', NULL, 2),
+(1, 'string', 1, 3, NULL, 3, -1, 'statement', NULL, 3),
+(1, 'string', 1, 4, NULL, 4, -1, 'statement', NULL, 4),
+(1, 'string', 1, 5, NULL, -1, 5, 'question', NULL, 5),
+(1, 'string', 1, 6, NULL, -1, 6, 'question', NULL, 6),
+(1, 'string', 1, 7, NULL, 7, -1, 'statement', NULL, 7),
+(1, 'string', 1, 8, NULL, -1, 8, 'question', NULL, 8),
+(1, 'string', 1, 9, NULL, 9, -1, 'statement', NULL, 9),
+(1, 'string', 1, 10, NULL, 10, -1, 'statement', NULL, 10),
+(1, 'string', 1, 11, NULL, -1, 11, 'question', NULL, 11),
+(1, 'string', 1, 12, NULL, -1, 12, 'question', NULL, 12),
+(2, 'choice', 1, 13, NULL, 13, 14, 'word', NULL, 13), -- question과 answer가 같으면 정답
+(2, 'choice', 1, 14, NULL, 14, 17, 'word', NULL, 14),
+(2, 'choice', 1, 15, NULL, 22, 15, 'word', NULL, 15),
+(2, 'choice', 1, 16, NULL, 16, 21, 'sentence', NULL, 16),
+(2, 'choice', 1, 17, NULL, 24, 17, 'sentence', NULL, 17),
+(3, 'same-different', 0, 18, 14, 18, -1, NULL, 'different', 18),
+(3, 'same-different', 0, 19, 19, 19, -1, NULL, 'same', 19),
+(3, 'same-different', 0, 20, 20, -1, 20, NULL, 'same', 20);
 
 
 INSERT INTO wowlingo.quest_item_units

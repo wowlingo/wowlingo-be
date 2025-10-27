@@ -18,16 +18,8 @@ export class UserQuestItem {
   questItemId: number;
 
   @Expose()
-  @Column({ name: 'user_answer_ox', type: 'varchar', length: 10, nullable: true, comment: 'Same/Different 답변' })
-  userAnswerOx: string | null;
-
-  @Expose()
-  @Column({ name: 'user_answer_sq', type: 'varchar', length: 10, nullable: true, comment: '평서문/의문문 답변' })
-  userAnswerSq: string | null;
-
-  @Expose()
-  @Column({ name: 'user_answer', type: 'bigint', nullable: true })
-  userAnswer: number | null;
+  @Column({ name: 'user_answer', type: 'text', nullable: true, comment: '선택한 답변 or Same/Different 답변 or 평서문/의문문 답변' })
+  userAnswer: string | null;
 
   @Expose()
   @Column({ name: 'correct_yn', type: 'boolean', nullable: true })

@@ -97,11 +97,11 @@ export class QuestController {
   async findAllQuestItemUnits(@Query('questItemId') questItemId?: string): Promise<BaseResponse<QuestItemUnit[]>> {
     let questItemUnits: QuestItemUnit[];
     
-    if (questItemId) {
-      questItemUnits = await this.questService.findQuestItemUnitsByQuestItemId(parseInt(questItemId));
-    } else {
+    // if (questItemId) {
+      // questItemUnits = await this.questService.findQuestItemUnitsByQuestItemId(parseInt(questItemId));
+    // } else {
       questItemUnits = await this.questService.findAllQuestItemUnits();
-    }
+    // }
     
     return BaseResponse.success(questItemUnits, '퀘스트 아이템 유닛 목록을 성공적으로 조회했습니다.');
   }
