@@ -15,6 +15,7 @@ import { VocabularyModule } from './app/vocabulary/vocabulary.module';
     // 전역 설정
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: `.env.${process.env.NODE_ENV || '.env'}`,
     }),
 
     // 인프라 모듈 (ORM 설정)
