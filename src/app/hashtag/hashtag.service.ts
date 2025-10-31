@@ -45,4 +45,61 @@ export class HashtagService {
             .where('qiuh.quest_item_unit_id IN (:...ids)', { ids })
             .getMany();
     }
+
+    async findGroupNamesByQuests(questIds: number[]) {
+        if (!questIds || questIds.length === 0) {
+            return [];
+        }
+
+        const rows = await this.hashtagRepository
+            .createQueryBuilder('h')
+            .select(['qh.quest_id AS quest_id', 'h.name AS name'])
+            .innerJoin('quest_hashtags', 'qh', 'qh.hashtag_id = h.hashtag_id')
+            .where('qh.quest_id IN (:...questIds)', { questIds })
+            .getRawMany();
+
+        // quest_id별로 그룹핑
+        const grouped = rows.reduce((acc, row) => {
+            if (!acc[row.quest_id]) {
+                acc[row.quest_id] = [];
+            }
+            acc[row.quest_id].push(row.name);
+            return acc;
+        }, {} as Record<number, string[]>);
+
+        // 객체를 배열 형태로 변환
+        return Object.entries(grouped).map(([quest_id, names]) => ({
+            quest_id: Number(quest_id),
+            names,
+        }));
+
+    }
+
+    async findGroupNamesByQuestItemUnits(questItemUnitIds: number[]) {
+        if (!questItemUnitIds || questItemUnitIds.length === 0) {
+            return [];
+        }
+
+        const rows = await this.hashtagRepository
+            .createQueryBuilder('h')
+            .select(['qh.quest_item_unit_id AS quest_item_unit_id', 'h.name AS name'])
+            .innerJoin('quest_item_unit_hashtags', 'qh', 'qh.hashtag_id = h.hashtag_id')
+            .where('qh.quest_item_unit_id IN (:...questItemUnitIds)', { questItemUnitIds })
+            .getRawMany();
+
+        // quest_item_unit_id별로 그룹핑
+        const grouped = rows.reduce((acc, row) => {
+            if (!acc[row.quest_item_unit_id]) {
+                acc[row.quest_item_unit_id] = [];
+            }
+            acc[row.quest_item_unit_id].push(row.name);
+            return acc;
+        }, {} as Record<number, string[]>);
+
+        // 객체를 배열 형태로 변환
+        return Object.entries(grouped).map(([quest_item_unit_id, names]) => ({
+            quest_item_unit_id: Number(quest_item_unit_id),
+            names,
+        }));
+    }
 }

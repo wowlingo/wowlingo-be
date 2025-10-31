@@ -8,11 +8,13 @@ import { UserQuestItem } from '../user-quest/entities/user-quest-item.entity';
 import { UserQuestProgress } from '../user-quest/entities/user-quest-progress.entity';
 import { QuestService } from './quest.service';
 import { QuestController } from './quest.controller';
+import { QuestAdminController } from './quest-admin.controller';
+import { HashtagModule } from '../hashtag/hashtag.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Quest, QuestItem, QuestItemUnit, UserQuest, UserQuestItem, UserQuestProgress])],
-  controllers: [QuestController],
+  imports: [TypeOrmModule.forFeature([Quest, QuestItem, QuestItemUnit, UserQuest, UserQuestItem, UserQuestProgress]), HashtagModule],
+  controllers: [QuestController, QuestAdminController],
   providers: [QuestService],
   exports: [QuestService],
 })
-export class QuestModule {}
+export class QuestModule { }

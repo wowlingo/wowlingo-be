@@ -8,6 +8,11 @@ import { QuestDataDto, QuestItemDataDto } from './dto';
 import { UserQuest } from '../user-quest/entities/user-quest.entity';
 import { UserQuestItem } from '../user-quest/entities/user-quest-item.entity';
 import { UserQuestProgress } from '../user-quest/entities/user-quest-progress.entity';
+import { AdminQuestResDto } from './dto/admin-quest-res.dto';
+import { Hashtag } from '../hashtag/entities/hashtag.entity';
+import { AdminQuestItemResDto } from './dto/admin-quest-item-res.dto';
+import { AdminQuestItemUnitResDto } from './dto/admin-quest-item-unit-res.dto';
+
 
 @Injectable()
 export class QuestService {
@@ -378,7 +383,7 @@ export class QuestService {
     return questDataDto;
   }
 
-  async updateQuest(id: number,questData: Partial<Quest>): Promise<Quest> {
+  async updateQuest(id: number, questData: Partial<Quest>): Promise<Quest> {
     await this.questRepository.update(id, questData);
     return this.findOneQuest(id);
   }
@@ -403,7 +408,8 @@ export class QuestService {
   // QuestItem 관련 메서드
   async findAllQuestItems(): Promise<QuestItem[]> {
     return this.questItemRepository.find({
-      relations: ['quest', 'questItemUnits'],
+      // relations: ['quest', 'questItemUnits'],
+      relations: ['quest'],
     });
   }
 
@@ -417,7 +423,6 @@ export class QuestService {
   async findQuestItemsByQuestId(questId: number): Promise<QuestItem[]> {
     return this.questItemRepository.find({
       where: { questId },
-      relations: ['questItemUnits'],
     });
   }
 
@@ -429,7 +434,7 @@ export class QuestService {
   // QuestItemUnit 관련 메서드
   async findAllQuestItemUnits(): Promise<QuestItemUnit[]> {
     return this.questItemUnitRepository.find({
-      relations: ['questItem'],
+      // relations: ['questItem'],
     });
   }
 
@@ -444,4 +449,132 @@ export class QuestService {
     const questItemUnit = this.questItemUnitRepository.create(questItemUnitData);
     return this.questItemUnitRepository.save(questItemUnit);
   }
+
+  async makeQuestsAdmin(quests: Quest[], hashtags: any[]): Promise<AdminQuestResDto[]> {
+    const hashtagMap = new Map<number, string[]>();
+    for (const hashtag of hashtags) {
+      hashtagMap.set(hashtag.quest_id, hashtag.names);
+    }
+    // for (const hashtag of hashtags) {
+    //     if (!hashtagMap.has(hashtag.questId)) {
+    //         hashtagMap.set(hashtag.quest_id, []);
+    //     }
+    //     hashtagMap.get(hashtag.quest_id)!.push(hashtag.name);
+    // }
+
+    return quests.map(quest => {
+      const adminQuestResDto = new AdminQuestResDto();
+      adminQuestResDto.questId = quest.questId;
+      adminQuestResDto.title = quest.title;
+      adminQuestResDto.type = quest.type;
+      adminQuestResDto.hashtags = hashtagMap.get(quest.questId) || [];
+      return adminQuestResDto;
+    });
+  }
+
+  async makeQuestItemUnitsAdmin(questItemUnits: QuestItemUnit[], hashtags: any[]): Promise<AdminQuestItemUnitResDto[]> {
+    const hashtagMap = new Map<number, string[]>();
+    for (const hashtag of hashtags) {
+      hashtagMap.set(hashtag.quest_item_unit_id, hashtag.names);
+    }
+
+    return questItemUnits.map(questItemUnit => {
+      const adminQuestItemUnitResDto = new AdminQuestItemUnitResDto();
+      adminQuestItemUnitResDto.questItemUnitId = questItemUnit.questItemUnitId;
+      adminQuestItemUnitResDto.str = questItemUnit.str;
+      adminQuestItemUnitResDto.urlNormal = questItemUnit.urlNormal;
+      adminQuestItemUnitResDto.urlSlow = questItemUnit.urlSlow;
+      adminQuestItemUnitResDto.hashtags = hashtagMap.get(questItemUnit.questItemUnitId) || [];
+      return adminQuestItemUnitResDto;
+    });
+  }
+
+  async findQuestItemUnitsByQuest1QuestItemIds(questItemIds: number[]) {
+
+    return this.findQuestItemUnitsByQuestItemIds(questItemIds, 'question1');
+  }
+
+  async findQuestItemUnitsByQuest2QuestItemIds(questItemIds: number[]) {
+
+    return this.findQuestItemUnitsByQuestItemIds(questItemIds, 'question2');
+  }
+
+
+  private async findQuestItemUnitsByQuestItemIds(
+    questItemIds: number[],
+    joinColumn: 'question1' | 'question2'
+  ): Promise<{ quest_item_id: number; unit: QuestItemUnit }[]> {
+    if (!questItemIds || questItemIds.length === 0) {
+      return [];
+    }
+
+    const rows = await this.questItemUnitRepository.createQueryBuilder('qiu')
+      .select('qiu.*')
+      .addSelect('qi.quest_item_id', 'grouping_key')
+      .innerJoin('quest_items', 'qi', `qi.${joinColumn} = qiu.quest_item_unit_id`)
+      .where('qi.quest_id IN (:...questItemIds)', { questItemIds })
+      .getRawMany();
+
+    // // quest_id별로 그룹핑
+    // const grouped = rows.reduce((acc, row) => {
+    //   const key = row.grouping_key;
+    //   if (!acc[key]) {
+    //     acc[key] = [];
+    //   }
+    //   acc[key].push(row);
+    //   return acc;
+    // }, {} as Record<number, QuestItemUnit>);
+
+    // 객체를 배열 형태로 변환
+    // return Object.entries(grouped).map(([quest_item_id, unit]) => ({
+    //   quest_item_id: Number(quest_item_id),
+    //   unit,
+    // }));
+
+    return rows.map(row => {
+      const { grouping_key, ...unitProperties } = row;
+
+      return {
+        quest_item_id: Number(grouping_key),
+        unit: unitProperties as QuestItemUnit,
+      };
+    });
+
+  }
+
+  async makeQuestItemsAdmin(
+    questItems: QuestItem[],
+    questItemUnits1: { quest_item_id: number; unit: QuestItemUnit; }[],
+    questItemUnits2: { quest_item_id: number; unit: QuestItemUnit; }[],
+    questItemUnits: QuestItemUnit[],
+    ): Promise<AdminQuestItemResDto[]> {
+
+    const questItemUnitMap1 = new Map<number, QuestItemUnit>();
+    for (const questItemUnit of questItemUnits1) {
+      questItemUnitMap1.set(questItemUnit.quest_item_id, questItemUnit.unit);
+    }
+
+    const questItemUnitMap2 = new Map<number, QuestItemUnit>();
+    for (const questItemUnit of questItemUnits2) {
+      questItemUnitMap2.set(questItemUnit.quest_item_id, questItemUnit.unit);
+    }
+
+    return questItems.map(questItem => {
+      const adminQuestItemResDto = new AdminQuestItemResDto();
+
+      adminQuestItemResDto.questItemId = questItem.questItemId;
+      adminQuestItemResDto.questId = questItem.questId;
+      adminQuestItemResDto.type = questItem.type;
+      adminQuestItemResDto.answerOx = questItem.answerOx;
+      adminQuestItemResDto.answerSq = questItem.answerSq;
+      adminQuestItemResDto.answer1 = questItemUnits?.find(unit => unit.questItemUnitId == questItem.answer1)?.str ?? null;
+      adminQuestItemResDto.answer2 = questItemUnits?.find(unit => unit.questItemUnitId == questItem.answer2)?.str ?? null;
+      adminQuestItemResDto.remark = questItem.remark;
+      adminQuestItemResDto.questUnit1 = questItemUnitMap1.get(questItem.questItemId) || null;
+      adminQuestItemResDto.questUnit2 = questItemUnitMap2.get(questItem.questItemId) || null;
+
+      return adminQuestItemResDto;
+    });
+  }
+
 }
