@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { formatInTimeZone } from 'date-fns-tz';
 import { QuestItemUnit } from '../quest/entities/quest-item-unit.entity';
 import { Vocabulary } from './entities/vocabulary.entity';
@@ -10,6 +10,8 @@ import { VocabHashtag } from '../hashtag/entities/vocab-hashtag.entity';
 @Injectable()
 export class VocabularyService {
     constructor(
+        @InjectDataSource()
+        private dataSource: DataSource,
         @InjectRepository(Vocabulary)
         private vocabularyRepository: Repository<Vocabulary>,
     ) { }
@@ -65,6 +67,17 @@ export class VocabularyService {
         }
 
         return query.getMany();
+    }
+
+    async removeVoca(id: number): Promise<void> {
+
+        await this.dataSource.transaction(async (transactionalEntityManager) => {
+            await transactionalEntityManager.delete(VocabHashtag, {
+                vocab: { vocabId: id }
+            });
+
+            await transactionalEntityManager.delete(Vocabulary, id);
+        });
     }
 
 }

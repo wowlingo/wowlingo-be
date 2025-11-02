@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Body, ParseIntPipe, Query, BadRequestException, ParseArrayPipe } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Param, Body, ParseIntPipe, Query, BadRequestException, ParseArrayPipe } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { BaseResponse } from '../../common/dto/base-response.dto';
 import { VocabularyService } from './vocabulary.service';
@@ -59,14 +59,6 @@ export class VocabularyController {
         return BaseResponse.success(vacabulary, '단어장 목록을 성공적으로 조회했습니다.');
     }
 
-    // @Get(':id')
-    // @ApiOperation({ summary: '특정 퀘스트 조회' })
-    // @ApiResponse({ status: 200, description: '퀘스트 조회 성공' })
-    // async findQuestById(@Param('id', ParseIntPipe) id: number): Promise<BaseResponse<QuestDataDto>> {
-    //     const quest = await this.questService.findQuestDataById(id);
-    //     return BaseResponse.success(quest, '퀘스트 정보를 성공적으로 조회했습니다.');
-    // }
-
     @Post()
     @ApiOperation({ summary: '단어장 등록' })
     @ApiResponse({ status: 200, description: '단어장 생성 성공' })
@@ -79,4 +71,13 @@ export class VocabularyController {
 
         return BaseResponse.success(vocab, '단어장 성공적으로 생성/등록 되었습니다.');
     }
+
+    @Delete(':id')
+    @ApiOperation({ summary: '특정 단어장 단어 삭제' })
+    @ApiResponse({ status: 200, description: '단어장 단어 삭제 성공' })
+    async findQuestById(@Param('id', ParseIntPipe) id: number): Promise<BaseResponse<void>> {
+        await this.vocabularyService.removeVoca(id);
+        return BaseResponse.success(undefined, '퀘스트 정보를 성공적으로 조회했습니다.');
+    }
+
 }
