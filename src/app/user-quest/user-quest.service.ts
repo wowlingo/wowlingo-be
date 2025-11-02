@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { In, PrimaryGeneratedColumn, Repository } from 'typeorm';
 import { UserQuestItem } from './entities/user-quest-item.entity';
 import { UserQuestItemDto } from './dto/user-quest-item.dto';
 import { Quest } from '../quest/entities/quest.entity'
@@ -265,10 +265,13 @@ export class UserQuestService {
             .innerJoin('user_quests', 'uq', 'uq.user_quest_id = uqi.user_quest_id')
             .where('uq.userId = :userId', { userId })
             .andWhere('uqi.correctYn = :correctYn', { correctYn })
-            .andWhere('uqi.attempt_at BETWEEN :startDate AND :endDate', { startDate, endDate })
+            .andWhere('uqi.started_at BETWEEN :startDate AND :endDate', { startDate, endDate })
 
         if (hashtagIds && hashtagIds.length > 0)
             query.andWhere('qiuh.hashtag_id IN (:...hashtagIds)', { hashtagIds });
+
+        console.log(query.getSql());
+        console.log(query.getParameters());
 
         return query.getMany();
     }
