@@ -3,12 +3,13 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { In, PrimaryGeneratedColumn, Repository } from 'typeorm';
 import { UserQuestItem } from './entities/user-quest-item.entity';
 import { UserQuestItemDto } from './dto/user-quest-item.dto';
-import { Quest } from '../quest/entities/quest.entity'
-import { QuestItem } from '../quest/entities/quest-item.entity'
-import { UserQuest } from './entities/user-quest.entity'
-import { UserQuestStatusDto, UserQuestListResponseDto } from './dto/user-quest-status.dto'
-import { UserQuestProgress } from './entities/user-quest-progress.entity'
-import { QuestItemUnit } from '../quest/entities/quest-item-unit.entity'
+import { Quest } from '../quest/entities/quest.entity';
+import { QuestItem } from '../quest/entities/quest-item.entity';
+import { UserQuest } from './entities/user-quest.entity';
+import { UserQuestStatusDto, UserQuestListResponseDto } from './dto/user-quest-status.dto';
+import { UserQuestProgress } from './entities/user-quest-progress.entity';
+import { QuestItemUnit } from '../quest/entities/quest-item-unit.entity';
+import { ReviewQuestItemDto } from './dto/review-quest-item.dto';
 
 @Injectable()
 export class UserQuestService {
@@ -135,10 +136,10 @@ export class UserQuestService {
     ): Promise<{ userQuest: UserQuest & { userQuestItems: any[] } }> {
         // 1. 항상 새로운 UserQuest 생성
         const userQuest = await this.createNewUserQuest(userId, questId, startedAt, endedAt, timeSpent, totalQuestItemCount, correctQuestItemCount, accuracyRate);
-        
+
         // 2. 모든 아이템 결과 저장
         const savedItems: UserQuestItem[] = [];
-        
+
         for (const itemData of items) {
 
             if (!itemData?.questItemId) {
@@ -195,8 +196,8 @@ export class UserQuestService {
     }
 
     private async createNewUserQuest(
-        userId: number, 
-        questId: number, 
+        userId: number,
+        questId: number,
         startedAt: Date,
         endedAt: Date,
         timeSpent: number,
@@ -235,7 +236,7 @@ export class UserQuestService {
         return 0;
     }
 
-    async getQuestItemsByCorrectYnAndAttemptAt(userId: number, correctYn: boolean, date: Date): Promise<QuestItem[]> {
+    async getQuestItemsByCorrectYnAndStartedAt(userId: number, correctYn: boolean, date: Date): Promise<QuestItem[]> {
         const startDate = new Date(date);
         startDate.setHours(0, 0, 0, 0);
         const endDate = new Date(date);
@@ -246,11 +247,11 @@ export class UserQuestService {
             .innerJoin('user_quests', 'uq', 'uq.user_quest_id = uqi.user_quest_id')
             .where('uq.userId = :userId', { userId })
             .andWhere('uqi.correctYn = :correctYn', { correctYn })
-            .andWhere('uqi.attempt_at BETWEEN :startDate AND :endDate', { startDate, endDate })
+            .andWhere('uqi.started_at BETWEEN :startDate AND :endDate', { startDate, endDate })
             .getMany();
     }
 
-    async getQuestItemUnitsByCorrectYnAndAttemptAtAndHashtags(userId: number, correctYn: boolean, date: Date, hashtagIds: number[]) {
+    async getQuestItemUnitsByCorrectYnAndAttemptAtAndHashtags(userId: number, correctYn: boolean, date: Date, hashtagIds: number[], question: 'question1' | 'question2') {
         const startDate = new Date(date);
         startDate.setHours(0, 0, 0, 0);
         const endDate = new Date(date);
@@ -259,8 +260,11 @@ export class UserQuestService {
         let query = this.questItemUnitRepository
             .createQueryBuilder('qiu')
             .distinct(true)
-            .innerJoin('quest_items', 'qi', 'qiu.quest_item_unit_id IN (qi.question1, qi.question2)')
-            .leftJoin('quest_item_unit_hashtags', 'qiuh', 'qiuh.quest_item_unit_id IN(qi.question1, qi.question2)')
+            .select('qiu.*')
+            .addSelect(['qi.quest_item_id', 'q.quest_id', 'q.title AS quest_title'])
+            .innerJoin('quest_items', 'qi', 'qiu.quest_item_unit_id IN (qi.'+question+')')
+            .innerJoin('quests', 'q', 'qi.quest_id = q.quest_id')
+            .leftJoin('quest_item_unit_hashtags', 'qiuh', 'qiuh.quest_item_unit_id IN(qi.' + question +')')
             .innerJoin('user_quest_items', 'uqi', 'uqi.quest_item_id = qi.quest_item_id')
             .innerJoin('user_quests', 'uq', 'uq.user_quest_id = uqi.user_quest_id')
             .where('uq.userId = :userId', { userId })
@@ -273,7 +277,7 @@ export class UserQuestService {
         console.log(query.getSql());
         console.log(query.getParameters());
 
-        return query.getMany();
+        return query.getRawMany();
     }
 
     private async processUserAnswer(
@@ -431,5 +435,45 @@ export class UserQuestService {
         progress.lastPlayedAt = new Date();
 
         await this.userQuestProgressRepository.save(progress);
+    }
+
+    async makeReviewQuestItemDto(reviewQuestItems: any[]): Promise<ReviewQuestItemDto[]> {
+        const dtoList: ReviewQuestItemDto[] = Object.values(
+            reviewQuestItems.reduce((acc, row) => {
+                const id = row.quest_item_id;
+                if (!acc[id]) {
+                    acc[id] = {
+                        questId: row.quest_id,
+                        title: row.quest_title,
+                        type: row.type,
+                        questItemId: row.quest_item_id,
+                        sounds: [],
+                        units: [],
+                    };
+                }
+
+                // sounds 배열 추가
+                if (row.url_normal) {
+                    acc[id].sounds.push({
+                        url: row.url_normal,
+                        type: 'normal'
+                    });
+                }
+                if (row.url_slow) {
+                    acc[id].sounds.push({
+                        url: row.url_slow,
+                        type: 'slow'
+                    });
+                }
+
+
+                // units 배열 추가
+                acc[id].units.push(row.str);
+
+                return acc;
+            }, {} as Record<number, ReviewQuestItemDto>)
+        );
+
+        return dtoList;
     }
 }

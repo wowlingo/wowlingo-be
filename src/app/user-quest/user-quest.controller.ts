@@ -7,8 +7,9 @@ import { SubmitQuestResultDto } from './dto/submit-quest-result.dto'
 import { HashtagService } from '../hashtag/hashtag.service';
 import { Hashtag } from '../hashtag/entities/hashtag.entity';
 import { QuestItemUnit } from '../quest/entities/quest-item-unit.entity';
-import { UserQuestService } from './user-quest.service'
-import { UserQuestListResponseDto } from './dto/user-quest-status.dto'
+import { UserQuestService } from './user-quest.service';
+import { UserQuestListResponseDto } from './dto/user-quest-status.dto';
+import { ReviewQuestItemDto } from './dto/review-quest-item.dto';
 
 @ApiTags('UserQuests')
 @Controller('user-quests')
@@ -56,7 +57,7 @@ export class UserQuestController {
         console.log('userId:', userId, typeof userId);
 
         if (!date) date = new Date();
-        const questItemUnits = await this.userQuestService.getQuestItemsByCorrectYnAndAttemptAt(userId, false, date);
+        const questItemUnits = await this.userQuestService.getQuestItemsByCorrectYnAndStartedAt(userId, false, date);
         const ids = questItemUnits.flatMap(it => [it.question1, it.question2]).filter((id): id is number => id !== null);
         const hashtags = await this.hashtagService.findAllByQuestItemUnitIds(ids);
 
@@ -77,11 +78,15 @@ export class UserQuestController {
         @Query('userId', ParseIntPipe) userId: number,
         @Query('date', ParseDatePipe) date?: Date,
         @Query('hashtags', new ParseArrayPipe({ items: Number, optional: true })) hashtagIds: number[] = []
-    ): Promise<BaseResponse<QuestItemUnit[]>> {
+    ): Promise<BaseResponse<ReviewQuestItemDto[]>> {//Promise<BaseResponse<AdminQuestResDto[]>>
         if (!date) date = new Date();
-        const questItemUnits = await this.userQuestService.getQuestItemUnitsByCorrectYnAndAttemptAtAndHashtags(userId, false, date, hashtagIds);
+        const questItemUnits1 = await this.userQuestService.getQuestItemUnitsByCorrectYnAndAttemptAtAndHashtags(userId, false, date, hashtagIds, 'question1');
+        const questItemUnits2 = await this.userQuestService.getQuestItemUnitsByCorrectYnAndAttemptAtAndHashtags(userId, false, date, hashtagIds, 'question2');
+        
+        const questItemUnits = [...questItemUnits1, ...questItemUnits2];
+        const reivewQuestItemDtos = await this.userQuestService.makeReviewQuestItemDto(questItemUnits);
 
-        return BaseResponse.success(questItemUnits, '오답노트 조회 성공.');
+        return BaseResponse.success(reivewQuestItemDtos, '오답노트 조회 성공.');
     }
 
     @Get(':userId')
