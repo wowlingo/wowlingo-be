@@ -62,8 +62,10 @@ export class VocabularyService {
             query.orderBy('v.created_at', 'DESC');
         } else if (sort === 'oldest') {
             query.orderBy('v.created_at', 'ASC');
-        } else {
-            query.orderBy('v.created_at', 'DESC');
+        } else if (sort === 'asc') {
+            query.orderBy('v.str', 'ASC');
+        } else { // desc
+            query.orderBy('v.str', 'DESC');
         }
 
         return query.getMany();
