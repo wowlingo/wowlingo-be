@@ -280,6 +280,46 @@ export class UserQuestService {
         return query.getRawMany();
     }
 
+    async getQuestItemUnitsByQuestItemIds(questItemIds: number[], question: 'question1' | 'question2') {
+        let query = this.questItemUnitRepository
+            .createQueryBuilder('qiu')
+            .distinct(true)
+            .select('qiu.*')
+            .addSelect(['qi.quest_item_id', 'q.quest_id', 'q.title AS quest_title'])
+            .innerJoin('quest_items', 'qi', 'qiu.quest_item_unit_id IN (qi.' + question + ')')
+            .innerJoin('quests', 'q', 'qi.quest_id = q.quest_id')
+            .where('qi.quest_item_id IN (:...questItemIds)', { questItemIds });
+
+        console.log(query.getSql());
+        console.log(query.getParameters());
+
+        return query.getRawMany();
+    }
+
+    async getQuestItemsByCorrectYnAndAttemptAtAndHashtags(userId: number, correctYn: boolean, date: Date, hashtagIds: number[]) {
+        const startDate = new Date(date);
+        startDate.setHours(0, 0, 0, 0);
+        const endDate = new Date(date);
+        endDate.setHours(23, 59, 59, 999);
+
+        let query = this.questItemRepository
+            .createQueryBuilder('qi')
+            .leftJoin('quest_item_unit_hashtags', 'qiuh', 'qiuh.quest_item_unit_id IN(qi.question1, qi.question2)')
+            .innerJoin('user_quest_items', 'uqi', 'uqi.quest_item_id = qi.quest_item_id')
+            .innerJoin('user_quests', 'uq', 'uq.user_quest_id = uqi.user_quest_id')
+            .where('uq.userId = :userId', { userId })
+            .andWhere('uqi.correctYn = :correctYn', { correctYn })
+            .andWhere('uqi.started_at BETWEEN :startDate AND :endDate', { startDate, endDate })
+
+        if (hashtagIds && hashtagIds.length > 0)
+            query.andWhere('qiuh.hashtag_id IN (:...hashtagIds)', { hashtagIds });
+
+        console.log(query.getSql());
+        console.log(query.getParameters());
+
+        return query.getMany();
+    }
+
     private async processUserAnswer(
         userQuest: UserQuest,
         itemData: Partial<UserQuestItemDto>

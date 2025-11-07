@@ -10,13 +10,15 @@ import { QuestItemUnit } from '../quest/entities/quest-item-unit.entity';
 import { UserQuestService } from './user-quest.service';
 import { UserQuestListResponseDto } from './dto/user-quest-status.dto';
 import { ReviewQuestItemDto } from './dto/review-quest-item.dto';
+import { QuestService } from '../quest/quest.service';
 
 @ApiTags('UserQuests')
 @Controller('user-quests')
 export class UserQuestController {
     constructor(
         private readonly userQuestService: UserQuestService,
-        private readonly hashtagService: HashtagService
+        private readonly hashtagService: HashtagService,
+        private readonly questService: QuestService,
     ) { }
 
     @Post(':userId/:questId/submit')
@@ -80,9 +82,19 @@ export class UserQuestController {
         @Query('hashtags', new ParseArrayPipe({ items: Number, optional: true })) hashtagIds: number[] = []
     ): Promise<BaseResponse<ReviewQuestItemDto[]>> {//Promise<BaseResponse<AdminQuestResDto[]>>
         if (!date) date = new Date();
-        const questItemUnits1 = await this.userQuestService.getQuestItemUnitsByCorrectYnAndAttemptAtAndHashtags(userId, false, date, hashtagIds, 'question1');
-        const questItemUnits2 = await this.userQuestService.getQuestItemUnitsByCorrectYnAndAttemptAtAndHashtags(userId, false, date, hashtagIds, 'question2');
-        
+        // const questItemUnits1 = await this.userQuestService.getQuestItemUnitsByCorrectYnAndAttemptAtAndHashtags(userId, false, date, hashtagIds, 'question1');
+        // const questItemUnits2 = await this.userQuestService.getQuestItemUnitsByCorrectYnAndAttemptAtAndHashtags(userId, false, date, hashtagIds, 'question2');
+
+        const questItems = await this.userQuestService.getQuestItemsByCorrectYnAndAttemptAtAndHashtags(userId, false, date, hashtagIds);
+
+        const questItemIds = questItems.flatMap(it => it.questItemId).filter((id): id is number => id !== null);
+        if (!questItemIds || questItemIds.length === 0) {
+            return BaseResponse.success([], '오답노트 조회 성공.');
+        }
+
+        const questItemUnits1 = await this.userQuestService.getQuestItemUnitsByQuestItemIds(questItemIds, 'question1');
+        const questItemUnits2 = await this.userQuestService.getQuestItemUnitsByQuestItemIds(questItemIds, 'question2');
+
         const questItemUnits = [...questItemUnits1, ...questItemUnits2];
         const reivewQuestItemDtos = await this.userQuestService.makeReviewQuestItemDto(questItemUnits);
 

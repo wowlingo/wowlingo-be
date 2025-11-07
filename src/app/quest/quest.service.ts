@@ -512,7 +512,7 @@ export class QuestService {
       .select('qiu.*')
       .addSelect('qi.quest_item_id', 'grouping_key')
       .innerJoin('quest_items', 'qi', `qi.${joinColumn} = qiu.quest_item_unit_id`)
-      .where('qi.quest_id IN (:...questItemIds)', { questItemIds })
+      .where('qi.quest_item_id IN (:...questItemIds)', { questItemIds })
       .getRawMany();
 
     // // quest_id별로 그룹핑
