@@ -62,14 +62,32 @@ export class VocabularyController {
     @Post()
     @ApiOperation({ summary: '단어장 등록' })
     @ApiResponse({ status: 200, description: '단어장 생성 성공' })
-    async createVocab(@Body() vocabReqDto: VocabQuestReqDto): Promise<BaseResponse<Vocabulary>> {
+    async createVocab(@Body() vocabReqDto: VocabQuestReqDto): Promise<BaseResponse<Vocabulary[]>> {
 
-        const hashtags = await this.hashtagService.findAllByQuestItemUnitId(vocabReqDto.questItemUnitId);
-        const questItemUnit = await this.questService.findQuestItemUnitById(vocabReqDto.questItemUnitId);
+        const questItem = await this.questService.findQuestItemById(vocabReqDto.questItemId);
 
-        const vocab = await this.vocabularyService.createVocab(vocabReqDto.userId, hashtags, questItemUnit);
+        if (!questItem) {
+            return BaseResponse.success([], '유효하지 않은 Quest Item ID입니다.');
+        }
 
-        return BaseResponse.success(vocab, '단어장 성공적으로 생성/등록 되었습니다.');
+        const potentialUnitIds = [questItem.question1, questItem.question2];
+        const unitIds = potentialUnitIds.filter((id): id is number => id !== null && id !== undefined);
+        if (unitIds.length === 0) {
+            return BaseResponse.success([], '단어장을 생성할 질문 항목이 없습니다.');
+        }
+
+        const vocabs: Vocabulary[] = await Promise.all(
+            unitIds.map(async (unitId) => {
+                const [hashtags, unit] = await Promise.all([
+                    this.hashtagService.findAllByQuestItemUnitId(unitId),
+                    this.questService.findQuestItemUnitById(unitId),
+                ]);
+
+                return this.vocabularyService.createVocab(vocabReqDto.userId, hashtags, unit);
+            }),
+        );
+
+        return BaseResponse.success(vocabs, '단어장 성공적으로 생성/등록 되었습니다.');
     }
 
     @Delete(':id')

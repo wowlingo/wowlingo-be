@@ -102,4 +102,14 @@ export class HashtagService {
             names,
         }));
     }
+
+    async findAllByQuestItemId(questItemId: number): Promise<Hashtag[]>  {
+        return this.hashtagRepository
+            .createQueryBuilder('h')
+            .innerJoin('quest_hashtags', 'qh', 'qh.hashtag_id = h.hashtag_id')
+            .innerJoin('quest_items', 'qi', 'qi.quest_id = qh.quest_id ')
+            .where('qi.quest_item_id = :questItemId', { questItemId })
+            .getMany();
+    }
+
 }

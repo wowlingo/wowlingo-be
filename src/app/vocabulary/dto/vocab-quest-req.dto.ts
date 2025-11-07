@@ -13,10 +13,18 @@ export class VocabQuestReqDto {
     userId: number;
 
     @ApiProperty({
-        description: '문제 항목 ID',
+        description: '문제 ID',
         example: 1,
         required: true,
     })
     @IsNumber()
-    questItemUnitId: number;
+    questItemId: number;
+
+    // @ApiProperty({
+    //     description: '문제 항목 ID',
+    //     example: 1,
+    //     required: false,
+    // })
+    // @IsNumber()
+    // questItemUnitId: number | null;
 }

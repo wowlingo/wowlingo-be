@@ -416,7 +416,7 @@ export class QuestService {
   async findQuestItemById(id: number): Promise<QuestItem> {
     return this.questItemRepository.findOneOrFail({
       where: { questItemId: id },
-      relations: ['quest', 'questItemUnits'],
+      relations: ['quest'],
     });
   }
 
@@ -547,7 +547,7 @@ export class QuestService {
     questItemUnits1: { quest_item_id: number; unit: QuestItemUnit; }[],
     questItemUnits2: { quest_item_id: number; unit: QuestItemUnit; }[],
     questItemUnits: QuestItemUnit[],
-    ): Promise<AdminQuestItemResDto[]> {
+  ): Promise<AdminQuestItemResDto[]> {
 
     const questItemUnitMap1 = new Map<number, QuestItemUnit>();
     for (const questItemUnit of questItemUnits1) {
