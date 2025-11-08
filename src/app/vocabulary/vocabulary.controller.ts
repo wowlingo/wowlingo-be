@@ -71,7 +71,11 @@ export class VocabularyController {
         }
 
         const potentialUnitIds = [questItem.question1, questItem.question2];
-        const unitIds = potentialUnitIds.filter((id): id is number => id !== null && id !== undefined);
+        const unitIds = Array.from(
+            new Set( // 중복제거.
+                potentialUnitIds.filter((id): id is number => id !== null && id !== undefined)
+            )
+        );
         if (unitIds.length === 0) {
             return BaseResponse.success([], '단어장을 생성할 질문 항목이 없습니다.');
         }
