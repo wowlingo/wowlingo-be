@@ -45,4 +45,26 @@ export class UserController {
     return BaseResponse.success(userQuestAttempts, '사용자 정보 정보를 성공적으로 조회했습니다.');
   }
 
+  @Get(':id/quest-attempts/this-week')
+  @ApiOperation({ summary: '사용자 이번주 학습현황' })
+  @ApiResponse({ status: 200, description: '사용자 이번주 학습현황 조회 성공' })
+  async getQuestAttemptsThisWeek(
+    @Param('id', ParseIntPipe) userId: number,
+  ): Promise<BaseResponse<any>> {
+    // 월 화 수 목 금 토
+    const userQuestAttempts = await this.userService.getUserQuestAttemptsThisWeek(userId);
+    return BaseResponse.success(userQuestAttempts, '사용자 정보 정보를 성공적으로 조회했습니다.');
+  }
+
+  @Get(':id/quest-attempts/ai')
+  @ApiOperation({ summary: '사용자 ai 학습 정보 조회' })
+  @ApiResponse({ status: 200, description: '사용자 ai 학습 정보 성공' })
+  async getAiFeedback(
+    @Param('id', ParseIntPipe) userId: number,
+    @Query('userQuestAttemptId', ParseIntPipe) userQuestAttemptId: number,
+  ): Promise<BaseResponse<any>> {
+    const userQuestAttempts = await this.userService.getUserAiFeedback(userId, userQuestAttemptId);
+    return BaseResponse.success(userQuestAttempts, '사용자 ai 학습 정보를 성공적으로 조회했습니다.');
+  }
+
 }

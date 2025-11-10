@@ -83,4 +83,40 @@ export class UserService {
       },
     });
   }
+
+  async getUserQuestAttemptsThisWeek(userId: number) {
+    // 오늘 날짜 기준
+    const today = new Date();
+
+    // 요일 (0 = 일요일, 1 = 월요일, ..., 6 = 토요일)
+    const day = today.getDay();
+
+    // 이번 주 월요일
+    const thisWeekMon = new Date(today);
+    thisWeekMon.setDate(today.getDate() - (day === 0 ? 6 : day - 1));
+    thisWeekMon.setHours(0, 0, 0, 0);
+
+    // 이번 주 일요일
+    const thisWeekSun = new Date(thisWeekMon);
+    thisWeekSun.setDate(thisWeekMon.getDate() + 6);
+    thisWeekSun.setHours(23, 59, 59, 999);
+    
+    return this.userQuestAttemptRepository.find({
+      where: {
+        userId: userId,
+        loginDate: Between(thisWeekMon, thisWeekSun)
+      },
+    });
+  }
+
+  async getUserAiFeedback(userId: number, userQuestAttemptId: number) {
+    // cosnt aiFeedback = this.aiFeedbackRepository.find({
+    //   where: {
+    //     userId: userId,
+    //     userQuestAttemptId: userQuestAttemptId
+    //   },
+    // });
+
+    throw new Error('Method not implemented.');
+  }
 }
