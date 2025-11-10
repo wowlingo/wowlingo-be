@@ -10,6 +10,7 @@ import { UserQuestStatusDto, UserQuestListResponseDto } from './dto/user-quest-s
 import { UserQuestProgress } from './entities/user-quest-progress.entity';
 import { QuestItemUnit } from '../quest/entities/quest-item-unit.entity';
 import { ReviewQuestItemDto } from './dto/review-quest-item.dto';
+import { HashtagService } from '../hashtag/hashtag.service';
 
 @Injectable()
 export class UserQuestService {
@@ -26,6 +27,7 @@ export class UserQuestService {
         private userQuestProgressRepository: Repository<UserQuestProgress>,
         @InjectRepository(QuestItemUnit)
         private questItemUnitRepository: Repository<QuestItemUnit>,
+        private hashtagService: HashtagService,
     ) { }
 
     async getUserQuestStatusList(userId: number): Promise<UserQuestListResponseDto> {
@@ -49,6 +51,10 @@ export class UserQuestService {
         const questStatusList: UserQuestStatusDto[] = [];
         let activeQuestId: number | null = null;
         let previousQuestCompleted = true; // 첫 번째 퀘스트는 항상 열려있음
+
+        // 5. 퀘스트별 해시태그
+        const questIds = allQuests.flatMap(it => it.questId).filter((id): id is number => id !== null);
+        const hashtagMap = await this.hashtagService.getHashtagMapByQuests(questIds);
 
         for (const quest of allQuests) {
             const progress = progressMap.get(quest.questId);
@@ -74,7 +80,8 @@ export class UserQuestService {
             }
 
             // 태그 생성
-            const tags = this.generateQuestTags(quest.type);
+            // const tags = this.generateQuestTags(quest.type);
+            const tags = hashtagMap.get(quest.questId) || [];
 
             const questStatus: UserQuestStatusDto = {
                 questId: quest.questId,

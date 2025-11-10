@@ -6,19 +6,30 @@ import { QuestItem } from './entities/quest-item.entity';
 import { QuestItemUnit } from './entities/quest-item-unit.entity';
 import { BaseResponse } from '../../common/dto/base-response.dto';
 import { QuestDataDto } from './dto/quest-data.dto'
+import { QuestResDto } from './dto/quest-res.dto'
+import { HashtagService } from '../hashtag/hashtag.service';
 
 @ApiTags('Quests')
 @Controller('quests')
 export class QuestController {
-  constructor(private readonly questService: QuestService) {}
+  constructor(
+    private readonly questService: QuestService,
+    private readonly hashtagService: HashtagService,
+  ) {}
 
   // Quest 엔드포인트
   @Get()
   @ApiOperation({ summary: '모든 퀘스트 조회' })
   @ApiResponse({ status: 200, description: '퀘스트 목록 조회 성공' })
-  async findAllQuests(): Promise<BaseResponse<Quest[]>> {
+  async findAllQuests(): Promise<BaseResponse<QuestResDto[]>> {
     const quests = await this.questService.findAllQuests();
-    return BaseResponse.success(quests, '퀘스트 목록을 성공적으로 조회했습니다.');
+
+    const questIds = quests.flatMap(it => it.questId).filter((id): id is number => id !== null);
+    const hashtags = await this.hashtagService.findGroupNamesByQuests(questIds);
+
+    const resDtos = await this.questService.makeQuests(quests, hashtags);
+    
+    return BaseResponse.success(resDtos, '퀘스트 목록을 성공적으로 조회했습니다.');
   }
 
   @Get(':id')

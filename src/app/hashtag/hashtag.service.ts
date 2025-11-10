@@ -112,4 +112,16 @@ export class HashtagService {
             .getMany();
     }
 
+    async getHashtagMapByQuests(questIds: number[]) {
+        const hashtags = (await this.findGroupNamesByQuests(questIds)) as {
+            quest_id: number;
+            names: string[];
+        }[];
+        const hashtagMap = new Map<number, string[]>();
+        for (const hashtag of hashtags) {
+            hashtagMap.set(hashtag.quest_id, hashtag.names);
+        }
+        return hashtagMap;
+    }
+
 }

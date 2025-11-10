@@ -12,6 +12,7 @@ import { AdminQuestResDto } from './dto/admin-quest-res.dto';
 import { Hashtag } from '../hashtag/entities/hashtag.entity';
 import { AdminQuestItemResDto } from './dto/admin-quest-item-res.dto';
 import { AdminQuestItemUnitResDto } from './dto/admin-quest-item-unit-res.dto';
+import { QuestResDto } from './dto/quest-res.dto'
 
 
 @Injectable()
@@ -574,6 +575,24 @@ export class QuestService {
       adminQuestItemResDto.questUnit2 = questItemUnitMap2.get(questItem.questItemId) || null;
 
       return adminQuestItemResDto;
+    });
+  }
+
+  async makeQuests(quests: Quest[], hashtags: any[]): Promise<QuestResDto[]> {
+    const hashtagMap = new Map<number, string[]>();
+    for (const hashtag of hashtags) {
+      hashtagMap.set(hashtag.quest_id, hashtag.names);
+    }
+
+    return quests.map(quest => {
+      const questResDto = new QuestResDto();
+      questResDto.questId = quest.questId;
+      questResDto.questItemCount = quest.questItemCount;
+      questResDto.order = quest.order;
+      questResDto.title = quest.title;
+      questResDto.type = quest.type;
+      questResDto.hashtags = hashtagMap.get(quest.questId) || [];
+      return questResDto;
     });
   }
 
