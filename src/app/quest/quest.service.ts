@@ -363,7 +363,7 @@ export class QuestService {
           // answerDetail 생성
           const correctAnswerUnit = correctAnswer ? questUnitMap.get(Number(correctAnswer)) : null;
           questItemDataDto.answerDetail = {
-            type: String(correctAnswer || ''),
+            type: item.type || '',
             label: correctAnswerUnit?.str || '',
             units: correctAnswerUnit ? [correctAnswerUnit.str] : []
           };
