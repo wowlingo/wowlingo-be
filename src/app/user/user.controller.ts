@@ -56,15 +56,27 @@ export class UserController {
     return BaseResponse.success(userQuestAttempts, '사용자 정보 정보를 성공적으로 조회했습니다.');
   }
 
-  @Get(':id/quest-attempts/ai')
+  @Get(':id/quest-attempts/ai-feedback')
   @ApiOperation({ summary: '사용자 ai 학습 정보 조회' })
   @ApiResponse({ status: 200, description: '사용자 ai 학습 정보 성공' })
   async getAiFeedback(
     @Param('id', ParseIntPipe) userId: number,
     @Query('userQuestAttemptId', ParseIntPipe) userQuestAttemptId: number,
   ): Promise<BaseResponse<any>> {
-    const userQuestAttempts = await this.userService.getUserAiFeedback(userId, userQuestAttemptId);
-    return BaseResponse.success(userQuestAttempts, '사용자 ai 학습 정보를 성공적으로 조회했습니다.');
+    const aiFeedback = await this.userService.getUserAiFeedback(userId, userQuestAttemptId);
+    return BaseResponse.success(aiFeedback, '사용자 ai 학습 정보를 성공적으로 조회했습니다.');
+  }
+
+  @Get(':id/quest-attempts/ai-feedbacks')
+  @ApiOperation({ summary: '사사용자 ai 학습 정보 조회' })
+  @ApiResponse({ status: 200, description: '사용자 ai 학습 정보 성공' })
+  async getAiFeedbacks(
+    @Param('id', ParseIntPipe) userId: number,
+    @Query('year', ParseIntPipe) year: number,
+    @Query('month', ParseIntPipe) month: number,
+  ): Promise<BaseResponse<any>> {
+    const aiFeedbacks = await this.userService.getUserAiFeedbacks(userId, year, month);
+    return BaseResponse.success(aiFeedbacks, '사용자 ai 학습 정보를 성공적으로 조회했습니다.');
   }
 
 }

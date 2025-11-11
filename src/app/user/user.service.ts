@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, Repository } from 'typeorm';
-import { User } from './entities/user.entity'
+import { User } from './entities/user.entity';
 import { UserQuestAttempt } from './entities/user-quest-attempt.entity';
+import { AiFeedback } from './entities/ai-feedback.entity';
 
 @Injectable()
 export class UserService {
@@ -11,6 +12,8 @@ export class UserService {
     private userRepository: Repository<User>,
     @InjectRepository(UserQuestAttempt)
     private userQuestAttemptRepository: Repository<UserQuestAttempt>,
+    @InjectRepository(AiFeedback)
+    private aiFeedbackRepository: Repository<AiFeedback>,
   ) {}
 
   async create(userData: Partial<User>): Promise<User> {
@@ -110,13 +113,40 @@ export class UserService {
   }
 
   async getUserAiFeedback(userId: number, userQuestAttemptId: number) {
-    // cosnt aiFeedback = this.aiFeedbackRepository.find({
-    //   where: {
-    //     userId: userId,
-    //     userQuestAttemptId: userQuestAttemptId
-    //   },
-    // });
+    const aiFeedback = this.aiFeedbackRepository.findOne({
+      where: {
+        userQuestAttemptId: userQuestAttemptId,
+        userQuestAttempt: {
+          userId: userId
+        }
+      },
+      relations: {
+        userQuestAttempt: true,
+      },
+      order: {
+        createdAt: 'DESC'
+      }
+    });
 
-    throw new Error('Method not implemented.');
+    return aiFeedback;
+  }
+
+  async getUserAiFeedbacks(userId: number, year: number, month: number) {
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 1);
+
+    const aiFeedbacks = this.aiFeedbackRepository.find({
+      where: {
+        createdAt: Between(startDate, endDate),
+        userQuestAttempt: {
+          userId: userId
+        }
+      },
+      relations: {
+        userQuestAttempt: true,
+      },
+    });
+
+    return aiFeedbacks;
   }
 }
