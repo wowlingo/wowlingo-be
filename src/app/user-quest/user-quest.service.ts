@@ -11,6 +11,7 @@ import { UserQuestProgress } from './entities/user-quest-progress.entity';
 import { QuestItemUnit } from '../quest/entities/quest-item-unit.entity';
 import { ReviewQuestItemDto } from './dto/review-quest-item.dto';
 import { HashtagService } from '../hashtag/hashtag.service';
+import { FruitType } from './fruit.enum';
 
 @Injectable()
 export class UserQuestService {
@@ -51,6 +52,9 @@ export class UserQuestService {
         const questStatusList: UserQuestStatusDto[] = [];
         let activeQuestId: number | null = null;
         let previousQuestCompleted = true; // 첫 번째 퀘스트는 항상 열려있음
+        let currentFruit: FruitType = FruitType.Apple;
+        let currentFruitLevel: number = 1;
+        let nextLevelCount: number = 0;
 
         // 5. 퀘스트별 해시태그
         const questIds = allQuests.flatMap(it => it.questId).filter((id): id is number => id !== null);
@@ -66,8 +70,9 @@ export class UserQuestService {
             const isStarted = progress ? true : false;
 
             // 진행률 계산 (totalCount 기준)
-            const progressRate = totalCount > 0 ?
-                Math.round((correctCount / totalCount) * 100) : 0;
+            const currentRate = (correctCount / totalCount) * 100;
+            let progressRate = Math.min(totalCount > 0 ?
+                Math.round(currentRate) : 0, 100); // 진행률 최대 100
 
             // 정확도는 가장 최근 user_quest에서 가져오기
             let accuracyRate = 0;
@@ -100,8 +105,38 @@ export class UserQuestService {
             questStatusList.push(questStatus);
 
             // 활성 퀘스트 결정: 이전 퀘스트가 완료되고, 현재 퀘스트가 미완료인 첫 번째 퀘스트
+            // TODO:: 다음 문제를 풀기 시작해야만, 
             if (previousQuestCompleted && !isCompleted && activeQuestId === null) {
                 activeQuestId = quest.questId;
+
+                // 열매 정보 생성.
+                currentFruit = progress?.fruit ?? FruitType.Apple;
+                // 10문제 맞추면 다음 레벨로 넘어감.
+                // '소리의 씨앗(Lv1)' 에서 10문제 맞추면 -> '소리의 새싹(Lv2)'
+                // progressRate < 20% => 레벨 1
+                // progressRate < 40% => 레벨 2
+                // progressRate < 60% => 레벨 3
+                // progressRate < 80% => 레벨 4
+                // progressRate <= 100% => 레벨 5
+                // currentFruitLevel = Math.floor(correctCount / 10) + 1;
+                // nextLevelCount = (currentFruitLevel * 10) - correctCount;
+
+                // 현재 퀘스트 내에서의 레벨.
+                let localLevel = Math.floor(currentRate / 20) + 1;
+                if (localLevel > 5) localLevel = 5;
+
+                // 이전 퀘스트들의 만렙(5) 누적 계산
+                const baseLevel = (activeQuestId - 1) * 5;
+                currentFruitLevel = baseLevel + localLevel;
+
+                if (currentRate >= 100) nextLevelCount = 0;
+                else {
+                    const nextTargetPercent = localLevel * 20; // 다음 레벨.
+                    const targetCorrectCount = Math.ceil(totalCount * (nextTargetPercent / 100));
+                    nextLevelCount = Math.max(targetCorrectCount - correctCount, 0); // 0보다 작은건 없음.
+                }
+                
+                
             }
 
             // 다음 퀘스트를 위해 현재 퀘스트의 완료 상태 저장
@@ -110,7 +145,10 @@ export class UserQuestService {
 
         return {
             quests: questStatusList,
-            activeQuestId
+            activeQuestId,
+            fruit: currentFruit,
+            fruitLevel: currentFruitLevel,
+            nextLevelCount
         };
     }
 
@@ -269,9 +307,9 @@ export class UserQuestService {
             .distinct(true)
             .select('qiu.*')
             .addSelect(['qi.quest_item_id', 'q.quest_id', 'q.title AS quest_title'])
-            .innerJoin('quest_items', 'qi', 'qiu.quest_item_unit_id IN (qi.'+question+')')
+            .innerJoin('quest_items', 'qi', 'qiu.quest_item_unit_id IN (qi.' + question + ')')
             .innerJoin('quests', 'q', 'qi.quest_id = q.quest_id')
-            .leftJoin('quest_item_unit_hashtags', 'qiuh', 'qiuh.quest_item_unit_id IN(qi.' + question +')')
+            .leftJoin('quest_item_unit_hashtags', 'qiuh', 'qiuh.quest_item_unit_id IN(qi.' + question + ')')
             .innerJoin('user_quest_items', 'uqi', 'uqi.quest_item_id = qi.quest_item_id')
             .innerJoin('user_quests', 'uq', 'uq.user_quest_id = uqi.user_quest_id')
             .where('uq.userId = :userId', { userId })
@@ -457,6 +495,7 @@ export class UserQuestService {
                 passThreshold: 50,
                 correctCount: 0,
                 doneYn: false,
+                fruit: makeRandomFruit(questId) // 랜덤 과일 가져오기.
             });
         }
 
@@ -522,5 +561,40 @@ export class UserQuestService {
         );
 
         return dtoList;
+    }
+}
+
+function makeRandomFruit(questId: number): FruitType {
+    const numberArray: number[] = [
+        1, 2, 3, 4, 5, 2, 4, 5, 1, 3, 4, 3, 2, 1, 5, 1, 3, 5, 2, 4, 3, 1, 4, 5, 2, 5, 2, 1, 3, 4, 2, 3, 5, 4, 1, 4, 5, 2, 3, 1, 5, 4, 2, 1, 3, 1, 2, 3, 5, 4, 3, 5, 4, 1, 2, 4, 3, 2, 1, 5, 3, 2, 5, 4, 1,
+        2, 4, 5, 3, 1, 2, 1, 4, 3, 5, 2, 1, 4, 5, 3, 1, 3, 2, 5, 4, 2, 4, 1, 3, 5, 4, 3, 1, 5, 2,
+        3, 4, 2, 1, 5, 1, 2, 4, 5, 3, 1, 5, 4, 2, 3, 1, 2, 3, 4, 5, 2, 3, 4, 1, 5, 4, 1, 2, 5, 3,
+        2, 4, 1, 5, 3, 4, 5, 1, 3, 2, 4, 3, 1, 2, 5, 3, 5, 4, 1, 2, 3, 2, 5, 1, 4, 2, 4, 5, 1, 3,
+        1, 4, 2, 5, 3, 2, 4, 5, 1, 3, 2, 1, 5, 3, 4, 5, 3, 4, 2, 1, 3, 1, 2, 5, 4, 1, 5, 4, 3, 2,
+        5, 3, 4, 2, 1, 4, 2, 5, 3, 1, 3, 4, 2, 5, 1, 4, 3, 2, 5, 1, 4, 2, 1, 5, 3, 5, 4, 1, 3, 2,
+        4, 5, 1, 3, 2, 3, 2, 5, 4, 1, 3, 2, 1, 4, 5, 1, 2, 5, 3, 4, 3, 4, 5, 1, 2, 3, 2, 5, 1, 4,
+        3, 1, 4, 5, 2, 5
+    ];
+
+    let index = questId - 1;
+    if (index < 0 && index >= numberArray.length) {
+        index = Math.floor(Math.random() * 5) + 1;
+    }
+
+    const arrayValue: number = numberArray[index]; // 1, 2, 3, 4, 5 중 하나
+
+    switch (arrayValue) {
+        case 1:
+            return FruitType.Apple;
+        case 2:
+            return FruitType.Strawberry;
+        case 3:
+            return FruitType.Peach;
+        case 4:
+            return FruitType.Cherry;
+        case 5:
+            return FruitType.Blueberry;
+        default:
+            return FruitType.Apple;
     }
 }

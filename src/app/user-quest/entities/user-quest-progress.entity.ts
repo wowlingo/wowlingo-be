@@ -1,6 +1,7 @@
 // src/app/user-quest/entities/user-quest-progress.entity.ts
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, Unique } from 'typeorm';
 import { User } from '../../user/entities/user.entity';
+import { FruitType } from '../fruit.enum';
 
 @Entity('user_quest_progress')
 @Unique(['userId', 'questId'])  // !한 유저당 한 퀘스트 1개만, update
@@ -28,6 +29,15 @@ export class UserQuestProgress {
 
   @Column({ name: 'last_played_at', type: 'datetime', nullable: true })
   lastPlayedAt: Date;
+
+  @Column({
+    name: 'fruit',
+    type: 'enum',
+    enum: FruitType,
+    default: FruitType.Apple,
+    nullable: false
+  })
+  fruit: FruitType = FruitType.Apple;
 
   @ManyToOne(() => User)
   @JoinColumn({ name: 'user_id' })

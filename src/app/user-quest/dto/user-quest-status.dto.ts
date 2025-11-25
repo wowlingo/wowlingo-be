@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { FruitType } from '../fruit.enum';
 
 export class UserQuestStatusDto {
   @ApiProperty({ description: '퀘스트 ID', example: 1 })
@@ -44,4 +45,13 @@ export class UserQuestListResponseDto {
 
   @ApiProperty({ description: '현재 활성 퀘스트 ID', example: 1 })
   activeQuestId: number | null;
+
+  @ApiProperty({ description: '현재 열매 타입' })
+  fruit: FruitType;
+
+  @ApiProperty({ description: '현재 열매 레벨' })
+  fruitLevel: number;
+
+  @ApiProperty({ description: '다음 레벨까지 남은 문제 개수' })
+  nextLevelCount: number;
 }
