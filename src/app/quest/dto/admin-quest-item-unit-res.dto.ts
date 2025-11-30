@@ -8,6 +8,9 @@ export class AdminQuestItemUnitResDto {
 
   @IsString()
   str: string;
+  // TODO deprecated하거나, type enum 지정 필요. quest_items와의 일관성 고려 혹은 hashtag
+  @IsString()
+  type: string;
 
   @IsString()
   urlNormal: string;
