@@ -10,6 +10,8 @@ import { QuestDataDto } from './dto/quest-data.dto';
 import { AdminQuestResDto } from './dto/admin-quest-res.dto';
 import { AdminQuestItemResDto } from './dto/admin-quest-item-res.dto';
 import { AdminQuestItemUnitResDto } from './dto/admin-quest-item-unit-res.dto';
+import { CreateQuestItemUnitDto } from './dto/create-quest-item-unit.dto';
+import { UpdateQuestItemUnitDto } from './dto/update-quest-item-unit.dto';
 
 
 
@@ -141,11 +143,39 @@ export class QuestAdminController {
   }
 
   @Post('units')
-  @ApiOperation({ summary: '새 퀘스트 아이템 유닛 생성' })
+  @ApiOperation({ summary: '새 퀘스트 아이템 유닛 생성 (Hashtag 연결 포함)' })
   @ApiResponse({ status: 201, description: '퀘스트 아이템 유닛 생성 성공' })
-  async createQuestItemUnit(@Body() questItemUnitData: Partial<QuestItemUnit>): Promise<BaseResponse<QuestItemUnit>> {
-    const questItemUnit = await this.questService.createQuestItemUnit(questItemUnitData);
+  async createQuestItemUnit(@Body() dto: CreateQuestItemUnitDto): Promise<BaseResponse<QuestItemUnit>> {
+    const questItemUnit = await this.questService.createQuestItemUnitWithHashtags(dto);
     return BaseResponse.success(questItemUnit, '퀘스트 아이템 유닛이 성공적으로 생성되었습니다.');
+  }
+
+  @Put('units/:id')
+  @ApiOperation({ summary: '퀘스트 아이템 유닛 수정 (Hashtag 재연결 포함)' })
+  @ApiResponse({ status: 200, description: '퀘스트 아이템 유닛 수정 성공' })
+  async updateQuestItemUnit(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateQuestItemUnitDto,
+  ): Promise<BaseResponse<QuestItemUnit>> {
+    const questItemUnit = await this.questService.updateQuestItemUnitWithHashtags(id, dto);
+    return BaseResponse.success(questItemUnit, '퀘스트 아이템 유닛이 성공적으로 수정되었습니다.');
+  }
+
+  @Delete('units/:id')
+  @ApiOperation({ summary: '퀘스트 아이템 유닛 삭제' })
+  @ApiResponse({ status: 200, description: '퀘스트 아이템 유닛 삭제 성공' })
+  @ApiResponse({ status: 400, description: 'Quest Item에서 사용 중인 Unit은 삭제 불가' })
+  async deleteQuestItemUnit(@Param('id', ParseIntPipe) id: number): Promise<BaseResponse<void>> {
+    await this.questService.deleteQuestItemUnit(id);
+    return BaseResponse.success(undefined, '퀘스트 아이템 유닛이 성공적으로 삭제되었습니다.');
+  }
+
+  @Get('units/:id/quests')
+  @ApiOperation({ summary: '특정 Unit이 사용된 Quest 목록 조회' })
+  @ApiResponse({ status: 200, description: 'Unit이 사용된 Quest 목록 조회 성공' })
+  async findQuestsByUnitId(@Param('id', ParseIntPipe) id: number): Promise<BaseResponse<Quest[]>> {
+    const quests = await this.questService.findQuestsByUnitId(id);
+    return BaseResponse.success(quests, 'Unit이 사용된 Quest 목록을 성공적으로 조회했습니다.');
   }
 
 }

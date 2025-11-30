@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { In, Repository, DataSource } from 'typeorm';
 import { Quest } from './entities/quest.entity';
 import { QuestItem } from './entities/quest-item.entity';
 import { QuestItemUnit } from './entities/quest-item-unit.entity';
@@ -12,7 +12,10 @@ import { AdminQuestResDto } from './dto/admin-quest-res.dto';
 import { Hashtag } from '../hashtag/entities/hashtag.entity';
 import { AdminQuestItemResDto } from './dto/admin-quest-item-res.dto';
 import { AdminQuestItemUnitResDto } from './dto/admin-quest-item-unit-res.dto';
-import { QuestResDto } from './dto/quest-res.dto'
+import { QuestResDto } from './dto/quest-res.dto';
+import { QuestItemUnitHashtag } from '../hashtag/entities/quest-item-unit-hashtag.entity';
+import { CreateQuestItemUnitDto } from './dto/create-quest-item-unit.dto';
+import { UpdateQuestItemUnitDto } from './dto/update-quest-item-unit.dto';
 
 
 @Injectable()
@@ -30,6 +33,11 @@ export class QuestService {
     private userQuestItemRepository: Repository<UserQuestItem>,
     @InjectRepository(UserQuestProgress)
     private userQuestProgressRepository: Repository<UserQuestProgress>,
+    @InjectRepository(Hashtag)
+    private hashtagRepository: Repository<Hashtag>,
+    @InjectRepository(QuestItemUnitHashtag)
+    private questItemUnitHashtagRepository: Repository<QuestItemUnitHashtag>,
+    private dataSource: DataSource,
   ) { }
 
   // Quest 관련 메서드
@@ -483,6 +491,7 @@ export class QuestService {
       const adminQuestItemUnitResDto = new AdminQuestItemUnitResDto();
       adminQuestItemUnitResDto.questItemUnitId = questItemUnit.questItemUnitId;
       adminQuestItemUnitResDto.str = questItemUnit.str;
+      adminQuestItemUnitResDto.type = questItemUnit.type;
       adminQuestItemUnitResDto.urlNormal = questItemUnit.urlNormal;
       adminQuestItemUnitResDto.urlSlow = questItemUnit.urlSlow;
       adminQuestItemUnitResDto.hashtags = hashtagMap.get(questItemUnit.questItemUnitId) || [];
@@ -596,4 +605,173 @@ export class QuestService {
     });
   }
 
+  /**
+   * Unit 생성 with Hashtag 연결
+   */
+  async createQuestItemUnitWithHashtags(dto: CreateQuestItemUnitDto): Promise<QuestItemUnit> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const hashtags = await this.hashtagRepository.findBy({
+        hashtagId: In(dto.hashtagIds),
+      });
+
+      if (hashtags.length !== dto.hashtagIds.length) {
+        throw new BadRequestException('일부 해시태그를 찾을 수 없습니다.');
+      }
+
+      // Unit의 type 필드에 첫 번째 Hashtag의 code 저장 (backward compatibility)
+      // TODO unit.type 규칙 필요
+      const primaryHashtagCode = hashtags[0]?.code || 'word';
+
+      const questItemUnit = queryRunner.manager.create(QuestItemUnit, {
+        str: dto.str,
+        type: primaryHashtagCode,
+        urlNormal: dto.urlNormal,
+        urlSlow: dto.urlSlow,
+        remark: dto.remark,
+      });
+      const savedUnit = await queryRunner.manager.save(QuestItemUnit, questItemUnit);
+
+      const unitHashtags = dto.hashtagIds.map(hashtagId =>
+        queryRunner.manager.create(QuestItemUnitHashtag, {
+          questId: savedUnit.questItemUnitId,
+          hashtag: { hashtagId },
+          questItemUnit: savedUnit,
+        }),
+      );
+      await queryRunner.manager.save(QuestItemUnitHashtag, unitHashtags);
+
+      await queryRunner.commitTransaction();
+      return savedUnit;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  /**
+   * Unit 수정 with Hashtag 재연결
+   */
+  async updateQuestItemUnitWithHashtags(
+    id: number,
+    dto: UpdateQuestItemUnitDto,
+  ): Promise<QuestItemUnit> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const existingUnit = await this.questItemUnitRepository.findOne({
+        where: { questItemUnitId: id },
+      });
+
+      if (!existingUnit) {
+        throw new NotFoundException(`Unit ID ${id}를 찾을 수 없습니다.`);
+      }
+
+      const updateData: Partial<QuestItemUnit> = {};
+      if (dto.str) updateData.str = dto.str;
+      if (dto.urlNormal) updateData.urlNormal = dto.urlNormal;
+      if (dto.urlSlow) updateData.urlSlow = dto.urlSlow;
+      if (dto.remark !== undefined) updateData.remark = dto.remark;
+
+      if (dto.hashtagIds && dto.hashtagIds.length > 0) {
+        const hashtags = await this.hashtagRepository.findBy({
+          hashtagId: In(dto.hashtagIds),
+        });
+
+        if (hashtags.length !== dto.hashtagIds.length) {
+          throw new BadRequestException('일부 해시태그를 찾을 수 없습니다.');
+        }
+
+        // 기존 Hashtag 연결 삭제
+        await queryRunner.manager.delete(QuestItemUnitHashtag, {
+          questId: id,
+        });
+
+        // 새 Hashtag 연결 생성
+        const unitHashtags = dto.hashtagIds.map(hashtagId =>
+          queryRunner.manager.create(QuestItemUnitHashtag, {
+            questId: id,
+            hashtag: { hashtagId },
+            questItemUnit: existingUnit,
+          }),
+        );
+        await queryRunner.manager.save(QuestItemUnitHashtag, unitHashtags);
+
+        // type 필드 업데이트 (첫 번째 Hashtag의 code)
+        // TODO unit.type 규칙 필요
+        updateData.type = hashtags[0]?.code || existingUnit.type;
+      }
+
+      if (Object.keys(updateData).length > 0) {
+        await queryRunner.manager.update(QuestItemUnit, id, updateData);
+      }
+
+      await queryRunner.commitTransaction();
+
+      return this.questItemUnitRepository.findOneOrFail({
+        where: { questItemUnitId: id },
+      });
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  /**
+   * Unit 삭제 (연결된 QuestItem에서 사용 중이면 에러)
+   */
+  async deleteQuestItemUnit(id: number): Promise<void> {
+    const unit = await this.questItemUnitRepository.findOne({
+      where: { questItemUnitId: id },
+    });
+
+    if (!unit) {
+      throw new NotFoundException(`Unit ID ${id}를 찾을 수 없습니다.`);
+    }
+
+    const usedInQuestItems = await this.questItemRepository
+      .createQueryBuilder('qi')
+      .where('qi.question1 = :unitId OR qi.question2 = :unitId OR qi.answer1 = :unitId OR qi.answer2 = :unitId', {
+        unitId: id,
+      })
+      .getCount();
+
+    if (usedInQuestItems > 0) {
+      throw new BadRequestException(
+        `이 Unit은 ${usedInQuestItems}개의 Quest Item에서 사용 중입니다. 삭제하려면 먼저 연결을 해제해주세요.`,
+      );
+    }
+
+    await this.questItemUnitHashtagRepository.delete({ questId: id });
+    
+    await this.questItemUnitRepository.remove(unit);
+  }
+
+  /**
+   * 특정 Unit이 사용된 Quest 목록 조회
+   */
+  async findQuestsByUnitId(unitId: number): Promise<Quest[]> {
+    const questItems = await this.questItemRepository
+      .createQueryBuilder('qi')
+      .leftJoinAndSelect('qi.quest', 'quest')
+      .where('qi.question1 = :unitId OR qi.question2 = :unitId OR qi.answer1 = :unitId OR qi.answer2 = :unitId', {
+        unitId,
+      })
+      .getMany();
+
+    const uniqueQuests = Array.from(
+      new Map(questItems.map(item => [item.quest.questId, item.quest])).values(),
+    );
+
+    return uniqueQuests;
+  }
 }
