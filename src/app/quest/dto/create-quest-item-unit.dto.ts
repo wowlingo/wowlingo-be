@@ -34,14 +34,6 @@ export class CreateQuestItemUnitDto {
   hashtagIds: number[];
 
   @ApiPropertyOptional({
-    description: 'Quest ID (생성 시 특정 Quest에 할당하려면 제공)',
-    example: 1,
-  })
-  @IsOptional()
-  @IsNumber()
-  questId?: number;
-
-  @ApiPropertyOptional({
     description: '비고 (메모, 추가 정보)',
     example: '초성 ㄱ 연습용',
   })
