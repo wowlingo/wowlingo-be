@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { JwtService } from '@nestjs/jwt';
 import { Between, Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { UserQuestAttempt } from './entities/user-quest-attempt.entity';
@@ -14,17 +15,18 @@ export class UserService {
     private userQuestAttemptRepository: Repository<UserQuestAttempt>,
     @InjectRepository(AiFeedback)
     private aiFeedbackRepository: Repository<AiFeedback>,
-  ) {}
+    private readonly jwtService: JwtService,
+  ) { }
 
   async create(userData: Partial<User>): Promise<User> {
     const user = this.userRepository.create(userData);
     return this.userRepository.save(user);
   }
-  
-  async login(nickname: string): Promise<Boolean> {
+
+  async login(nickname: string) {
     // 1. 이전에 접속한 적 있는 닉네임일 경우 -> 이어서 진행.
     // 2. 접속한 적 없는 닉네임일 경우 -> 신규 진행.
-    const user = await this.userRepository.findOne({
+    let user = await this.userRepository.findOne({
       where: { nickname },
       relations: ['userQuestAttempts'],
     });
@@ -39,20 +41,18 @@ export class UserService {
           loginDate.getDate() === today.getDate()
         );
       });
-      // 오늘 접속한 적 있으면.
-      if (questAttempt) {
-        return true;
+      // 오늘 접속한 적 없으면.
+      if (!questAttempt) {
+        // 오늘 접속 정보 저장.
+        const newUserQuestAttempt = this.userQuestAttemptRepository.create({
+          userId: user.userId,
+          loginDate: new Date(),
+        });
+        await this.userQuestAttemptRepository.save(newUserQuestAttempt);
       }
-
-      // 오늘 접속 정보 저장.
-      const newUserQuestAttempt = this.userQuestAttemptRepository.create({
-        userId: user.userId,
-        loginDate: new Date(),
-      });
-      await this.userQuestAttemptRepository.save(newUserQuestAttempt);
     }
     else {
-      await this.userRepository.manager.transaction(async (manager) => {
+      user = await this.userRepository.manager.transaction(async (manager) => {
         // 신규 닉네임 저장.
         const newUser = manager.create(User, {
           auth: '',
@@ -69,11 +69,22 @@ export class UserService {
 
         await manager.save(UserQuestAttempt, newUserQuestAttempt);
 
-        return true;
+        return savedUser;
       });
     }
 
-    return false;
+    // 토큰 생성 (Payload 구성)
+    const payload = { username: user.nickname, userId: user.userId };
+    const accessToken = this.jwtService.sign(payload);
+
+    const username = user.nickname;
+    const userId = user.userId;
+
+    return {
+      accessToken,
+      username,
+      userId
+    };
   }
 
   async getUserQuestAttempts(userId: number, year: number, month: number) {
@@ -103,7 +114,7 @@ export class UserService {
     const thisWeekSun = new Date(thisWeekMon);
     thisWeekSun.setDate(thisWeekMon.getDate() + 6);
     thisWeekSun.setHours(23, 59, 59, 999);
-    
+
     return this.userQuestAttemptRepository.find({
       where: {
         userId: userId,

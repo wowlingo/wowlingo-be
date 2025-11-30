@@ -126,8 +126,10 @@ export class UserQuestService {
                 if (localLevel > 5) localLevel = 5;
 
                 // 이전 퀘스트들의 만렙(5) 누적 계산
-                const baseLevel = (activeQuestId - 1) * 5;
-                currentFruitLevel = baseLevel + localLevel;
+                // const baseLevel = (activeQuestId - 1) * 5;
+                // currentFruitLevel = baseLevel + localLevel;
+                // 다시 레벨 초기화가 맞습니다.
+                currentFruitLevel = localLevel;
 
                 if (currentRate >= 100) nextLevelCount = 0;
                 else {
@@ -135,8 +137,8 @@ export class UserQuestService {
                     const targetCorrectCount = Math.ceil(totalCount * (nextTargetPercent / 100));
                     nextLevelCount = Math.max(targetCorrectCount - correctCount, 0); // 0보다 작은건 없음.
                 }
-                
-                
+
+
             }
 
             // 다음 퀘스트를 위해 현재 퀘스트의 완료 상태 저장
