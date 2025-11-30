@@ -15,6 +15,12 @@ export class HashtagService {
         @InjectRepository(VocabHashtag) private vocabHashtagRepository: Repository<VocabHashtag>,
     ) { }
 
+    async findAll(): Promise<Hashtag[]> {
+        return this.hashtagRepository.find({
+            order: { hashtagId: 'ASC' },
+        });
+    }
+
     async findAllByQuestItemUnitId(questItemUnitId: number): Promise<Hashtag[]> {
         return this.hashtagRepository
             .createQueryBuilder('h')
