@@ -123,9 +123,28 @@ export class QuestAdminController {
   @Get('items/:id')
   @ApiOperation({ summary: '특정 퀘스트 아이템 조회' })
   @ApiResponse({ status: 200, description: '퀘스트 아이템 조회 성공' })
-  async findQuestItemById(@Param('id', ParseIntPipe) id: number): Promise<BaseResponse<QuestItem>> {
+  async findQuestItemById(@Param('id', ParseIntPipe) id: number): Promise<BaseResponse<any>> {
     const questItem = await this.questService.findQuestItemById(id);
-    return BaseResponse.success(questItem, '퀘스트 아이템 정보를 성공적으로 조회했습니다.');
+
+    const unitIds = [
+      questItem.question1,
+      questItem.question2,
+      questItem.answer1,
+      questItem.answer2,
+    ].filter(id => id != null);
+
+    const units = await this.questService.findQuestItemUnitsByIds(unitIds);
+    const unitMap = new Map(units.map(u => [u.questItemUnitId, u]));
+
+    const populatedItem = {
+      ...questItem,
+      questUnit1: questItem.question1 ? unitMap.get(Number(questItem.question1)) : null,
+      questUnit2: questItem.question2 ? unitMap.get(Number(questItem.question2)) : null,
+      answerUnit1: questItem.answer1 ? unitMap.get(Number(questItem.answer1)) : null,
+      answerUnit2: questItem.answer2 ? unitMap.get(Number(questItem.answer2)) : null,
+    };
+
+    return BaseResponse.success(populatedItem, '퀘스트 아이템 정보를 성공적으로 조회했습니다.');
   }
 
   @Post('items')

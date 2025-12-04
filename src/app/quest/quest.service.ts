@@ -456,6 +456,15 @@ export class QuestService {
     });
   }
 
+  async findQuestItemUnitsByIds(ids: number[]): Promise<QuestItemUnit[]> {
+    if (!ids || ids.length === 0) {
+      return [];
+    }
+    return this.questItemUnitRepository.findBy({
+      questItemUnitId: In(ids),
+    });
+  }
+
   async createQuestItemUnit(questItemUnitData: Partial<QuestItemUnit>): Promise<QuestItemUnit> {
     const questItemUnit = this.questItemUnitRepository.create(questItemUnitData);
     return this.questItemUnitRepository.save(questItemUnit);
@@ -571,6 +580,11 @@ export class QuestService {
       questItemUnitMap2.set(questItemUnit.quest_item_id, questItemUnit.unit);
     }
 
+    const unitByIdMap = new Map<number, QuestItemUnit>();
+    for (const unit of questItemUnits) {
+      unitByIdMap.set(unit.questItemUnitId, unit);
+    }
+
     return questItems.map(questItem => {
       const adminQuestItemResDto = new AdminQuestItemResDto();
 
@@ -582,8 +596,11 @@ export class QuestService {
       adminQuestItemResDto.answer1 = questItemUnits?.find(unit => unit.questItemUnitId == questItem.answer1)?.str ?? null;
       adminQuestItemResDto.answer2 = questItemUnits?.find(unit => unit.questItemUnitId == questItem.answer2)?.str ?? null;
       adminQuestItemResDto.remark = questItem.remark;
+      adminQuestItemResDto.quest = questItem.quest || null;
       adminQuestItemResDto.questUnit1 = questItemUnitMap1.get(questItem.questItemId) || null;
       adminQuestItemResDto.questUnit2 = questItemUnitMap2.get(questItem.questItemId) || null;
+      adminQuestItemResDto.answerUnit1 = questItem.answer1 ? unitByIdMap.get(Number(questItem.answer1)) || null : null;
+      adminQuestItemResDto.answerUnit2 = questItem.answer2 ? unitByIdMap.get(Number(questItem.answer2)) || null : null;
 
       return adminQuestItemResDto;
     });
