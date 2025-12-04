@@ -1,7 +1,7 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsNumber, IsString, ValidateNested } from 'class-validator';
+import { IsNumber, IsString } from 'class-validator';
 import { QuestItemUnit } from '../../quest/entities/quest-item-unit.entity'
-import { QuestItem } from '../../quest/entities/quest-item.entity'
+import { Quest } from '../../quest/entities/quest.entity'
 
 export class AdminQuestItemResDto {
   @Type(() => Number)
@@ -30,10 +30,16 @@ export class AdminQuestItemResDto {
   @IsString()
   remark: string | null;
 
+  quest: Quest | null;
+
   questUnit1: QuestItemUnit | null;
 
   questUnit2: QuestItemUnit | null;
-  
+
+  answerUnit1: QuestItemUnit | null;
+
+  answerUnit2: QuestItemUnit | null;
+
   // @Type(() => Number)
   // @IsNumber()
   // unit1Id: number;
