@@ -12,6 +12,8 @@ import { AdminQuestItemResDto } from './dto/admin-quest-item-res.dto';
 import { AdminQuestItemUnitResDto } from './dto/admin-quest-item-unit-res.dto';
 import { CreateQuestItemUnitDto } from './dto/create-quest-item-unit.dto';
 import { UpdateQuestItemUnitDto } from './dto/update-quest-item-unit.dto';
+import { CreateQuestItemDto } from './dto/create-quest-item.dto';
+import { UpdateQuestItemDto } from './dto/update-quest-item.dto';
 
 
 
@@ -127,11 +129,30 @@ export class QuestAdminController {
   }
 
   @Post('items')
-  @ApiOperation({ summary: '새 퀘스트 아이템 생성' })
+  @ApiOperation({ summary: '새 퀘스트 아이템 생성 (with validation)' })
   @ApiResponse({ status: 201, description: '퀘스트 아이템 생성 성공' })
-  async createQuestItem(@Body() questItemData: Partial<QuestItem>): Promise<BaseResponse<QuestItem>> {
-    const questItem = await this.questService.createQuestItem(questItemData);
+  async createQuestItem(@Body() dto: CreateQuestItemDto): Promise<BaseResponse<QuestItem>> {
+    const questItem = await this.questService.createQuestItemWithValidation(dto);
     return BaseResponse.success(questItem, '퀘스트 아이템이 성공적으로 생성되었습니다.');
+  }
+
+  @Put('items/:id')
+  @ApiOperation({ summary: '퀘스트 아이템 수정 (with validation)' })
+  @ApiResponse({ status: 200, description: '퀘스트 아이템 수정 성공' })
+  async updateQuestItem(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateQuestItemDto,
+  ): Promise<BaseResponse<QuestItem>> {
+    const questItem = await this.questService.updateQuestItemWithValidation(id, dto);
+    return BaseResponse.success(questItem, '퀘스트 아이템이 성공적으로 수정되었습니다.');
+  }
+
+  @Delete('items/:id')
+  @ApiOperation({ summary: '퀘스트 아이템 삭제 (사용 중이면 삭제 불가)' })
+  @ApiResponse({ status: 200, description: '퀘스트 아이템 삭제 성공' })
+  async deleteQuestItem(@Param('id', ParseIntPipe) id: number): Promise<BaseResponse<void>> {
+    await this.questService.deleteQuestItemWithCheck(id);
+    return BaseResponse.success(undefined, '퀘스트 아이템이 성공적으로 삭제되었습니다.');
   }
 
   @Get('units/:id')
