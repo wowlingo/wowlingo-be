@@ -31,6 +31,7 @@ export class UserService {
       relations: ['userQuestAttempts'],
     });
 
+    let isNewUser = false;
     if (user) {
       const today = new Date();
       const questAttempt = user.userQuestAttempts.find(attempt => {
@@ -54,6 +55,7 @@ export class UserService {
     else {
       user = await this.userRepository.manager.transaction(async (manager) => {
         // 신규 닉네임 저장.
+        isNewUser = true;
         const newUser = manager.create(User, {
           auth: '',
           authType: '',
@@ -74,7 +76,7 @@ export class UserService {
     }
 
     // 토큰 생성 (Payload 구성)
-    const payload = { username: user.nickname, userId: user.userId };
+    const payload = { username: user.nickname, userId: user.userId, isNewUser: isNewUser };
     const accessToken = this.jwtService.sign(payload);
 
     const username = user.nickname;
@@ -83,7 +85,8 @@ export class UserService {
     return {
       accessToken,
       username,
-      userId
+      userId,
+      isNewUser
     };
   }
 
