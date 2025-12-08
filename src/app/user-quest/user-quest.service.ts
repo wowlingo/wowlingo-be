@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, PrimaryGeneratedColumn, Repository } from 'typeorm';
+import { Between, In, PrimaryGeneratedColumn, Repository } from 'typeorm';
 import { UserQuestItem } from './entities/user-quest-item.entity';
 import { UserQuestItemDto } from './dto/user-quest-item.dto';
 import { Quest } from '../quest/entities/quest.entity';
@@ -12,6 +12,7 @@ import { QuestItemUnit } from '../quest/entities/quest-item-unit.entity';
 import { ReviewQuestItemDto } from './dto/review-quest-item.dto';
 import { HashtagService } from '../hashtag/hashtag.service';
 import { FruitType } from './fruit.enum';
+import { UserQuestAttempt } from '../user/entities/user-quest-attempt.entity';
 
 @Injectable()
 export class UserQuestService {
@@ -28,6 +29,8 @@ export class UserQuestService {
         private userQuestProgressRepository: Repository<UserQuestProgress>,
         @InjectRepository(QuestItemUnit)
         private questItemUnitRepository: Repository<QuestItemUnit>,
+        @InjectRepository(UserQuestAttempt)
+        private userQuestAttemptRepository: Repository<UserQuestAttempt>,
         private hashtagService: HashtagService,
     ) { }
 
@@ -201,7 +204,10 @@ export class UserQuestService {
         // 3. user_quest_progress 업데이트 (누적 맞힌 문제 수 계산)
         await this.updateUserQuestProgress(userId, questId);
 
-        // 4. choice 타입의 경우 userAnswerText 추가
+        // 4. user_quest_attempts 업데이트 (학습 완료 시 attemptDate 설정)
+        await this.updateUserQuestAttempt(userId);
+
+        // 5. choice 타입의 경우 userAnswerText 추가
         const enrichedItems = await Promise.all(
             savedItems.map(async (item) => {
                 try {
@@ -233,7 +239,7 @@ export class UserQuestService {
             })
         );
 
-        // 5. userQuest에 enrichedItems 추가해서 반환
+        // 6. userQuest에 enrichedItems 추가해서 반환
         return {
             userQuest: {
                 ...userQuest,
@@ -563,6 +569,36 @@ export class UserQuestService {
         );
 
         return dtoList;
+    }
+
+    private async updateUserQuestAttempt(userId: number): Promise<void> {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(today.getDate() + 1);
+
+        const attempt = await this.userQuestAttemptRepository.findOne({
+            where: {
+                userId,
+                loginDate: Between(today, tomorrow)
+            }
+        });
+
+        // 레코드가 있고 attemptDate가 NULL인 경우만 업데이트 (첫 학습 완료 시간 유지)
+        if (attempt && !attempt.attemptDate) {
+            attempt.attemptDate = new Date();
+            await this.userQuestAttemptRepository.save(attempt);
+        }
+        // 레코드가 없으면 새로 생성 (loginDate + attemptDate 동시 설정)
+        else if (!attempt) {
+            const newAttempt = this.userQuestAttemptRepository.create({
+                userId,
+                loginDate: new Date(),
+                attemptDate: new Date()
+            });
+            await this.userQuestAttemptRepository.save(newAttempt);
+        }
+        // 레코드가 있고 attemptDate도 이미 있으면 아무것도 안함 (첫 학습 시간 유지)
     }
 }
 

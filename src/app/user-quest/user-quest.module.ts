@@ -10,12 +10,13 @@ import { QuestItem } from '../quest/entities/quest-item.entity';
 import { QuestItemUnit } from '../quest/entities/quest-item-unit.entity'
 import { HashtagModule } from '../hashtag/hashtag.module';
 import { User } from '../user/entities/user.entity';
+import { UserQuestAttempt } from '../user/entities/user-quest-attempt.entity';
 import { QuestModule } from '../quest/quest.module';
 
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([UserQuest, UserQuestItem, UserQuestProgress, Quest, QuestItem, QuestItemUnit, User]),
+        TypeOrmModule.forFeature([UserQuest, UserQuestItem, UserQuestProgress, Quest, QuestItem, QuestItemUnit, User, UserQuestAttempt]),
         HashtagModule, QuestModule,
     ],
     controllers: [UserQuestController],
