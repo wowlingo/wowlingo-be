@@ -92,7 +92,7 @@ export class QuestService {
         userId,
         questId,
         totalTargetCount: 70,
-        passThreshold: 50,
+        passThreshold: 56,
         correctCount: correctItemIds.size,
         doneYn: false,
       });
@@ -771,7 +771,7 @@ export class QuestService {
     }
 
     await this.questItemUnitHashtagRepository.delete({ questId: id });
-    
+
     await this.questItemUnitRepository.remove(unit);
   }
 

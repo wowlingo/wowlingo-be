@@ -124,6 +124,11 @@ export class UserQuestService {
                 // currentFruitLevel = Math.floor(correctCount / 10) + 1;
                 // nextLevelCount = (currentFruitLevel * 10) - correctCount;
 
+
+            }
+
+            // 현재 레벨은, 내가 마지막에 풀고 있는 학습을 기준으로 한다. 현재 풀고 있는 학습이 완료가 되더라도 다음 학습을 시작하기 전에는 레벨 리셋 안함.
+            if (previousQuestCompleted && isStarted) {
                 // 현재 퀘스트 내에서의 레벨.
                 let localLevel = Math.floor(currentRate / 20) + 1;
                 if (localLevel > 5) localLevel = 5;
@@ -140,9 +145,8 @@ export class UserQuestService {
                     const targetCorrectCount = Math.ceil(totalCount * (nextTargetPercent / 100));
                     nextLevelCount = Math.max(targetCorrectCount - correctCount, 0); // 0보다 작은건 없음.
                 }
-
-
             }
+
 
             // 다음 퀘스트를 위해 현재 퀘스트의 완료 상태 저장
             previousQuestCompleted = isCompleted;
@@ -500,7 +504,7 @@ export class UserQuestService {
                 userId,
                 questId,
                 totalTargetCount: 70,
-                passThreshold: 50,
+                passThreshold: 56,
                 correctCount: 0,
                 doneYn: false,
                 fruit: makeRandomFruit(questId) // 랜덤 과일 가져오기.
