@@ -13,7 +13,7 @@ async function bootstrap() {
 
   // CORS 설정
   app.enableCors({
-    origin: (origin, callback) => {
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
       const allowedOrigins = [
         'http://localhost:5173',
         'http://localhost:18090',
@@ -23,11 +23,11 @@ async function bootstrap() {
         'http://54.180.139.219:8090',
       ];
 
-      if (allowedOrigins.includes(origin)) {
+      if (origin && allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
 
-      if (origin.startsWith('https://wowlingo-client') && origin.endsWith('.vercel.app')) {
+      if (origin && origin.startsWith('https://wowlingo-client') && origin.endsWith('.vercel.app')) {
         return callback(null, true);
       }
 
