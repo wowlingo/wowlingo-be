@@ -14,7 +14,7 @@ async function bootstrap() {
   // CORS 설정
   app.enableCors({
     origin: ['http://localhost:5173', 'http://localhost:18090', 'http://localhost:3000', 
-      "http://54.180.139.219:3000", "http://54.180.139.219:8080", "http://54.180.139.219:8090"], // 프론트엔드 URL들
+      "http://54.180.139.219:3000", "http://54.180.139.219:8080", "http://54.180.139.219:8090", "https://wowlingo-client-li8nxjdal-yejins-projects-580a6440.vercel.app"], // 프론트엔드 URL들
     credentials: true,
   });
 
