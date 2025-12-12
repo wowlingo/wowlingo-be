@@ -110,10 +110,10 @@ export class UserQuestService {
             // 활성 퀘스트 결정: 이전 퀘스트가 완료되고, 현재 퀘스트가 미완료인 첫 번째 퀘스트
             // TODO:: 다음 문제를 풀기 시작해야만, 
             if (previousQuestCompleted && !isCompleted && activeQuestId === null) {
-                activeQuestId = quest.questId;
+                // activeQuestId = quest.questId;
 
-                // 열매 정보 생성.
-                currentFruit = progress?.fruit ?? FruitType.Apple;
+                // // 열매 정보 생성.
+                // currentFruit = progress?.fruit ?? FruitType.Apple;
                 // 10문제 맞추면 다음 레벨로 넘어감.
                 // '소리의 씨앗(Lv1)' 에서 10문제 맞추면 -> '소리의 새싹(Lv2)'
                 // progressRate < 20% => 레벨 1
@@ -129,6 +129,11 @@ export class UserQuestService {
 
             // 현재 레벨은, 내가 마지막에 풀고 있는 학습을 기준으로 한다. 현재 풀고 있는 학습이 완료가 되더라도 다음 학습을 시작하기 전에는 레벨 리셋 안함.
             if (previousQuestCompleted && isStarted) {
+                activeQuestId = quest.questId;
+
+                // 열매 정보 생성.
+                currentFruit = progress?.fruit ?? FruitType.Apple;
+
                 // 현재 퀘스트 내에서의 레벨.
                 let localLevel = Math.floor(currentRate / 20) + 1;
                 if (localLevel > 5) localLevel = 5;
@@ -530,7 +535,7 @@ export class UserQuestService {
         const doneYn = correctCount >= progress.passThreshold;
 
         // progress 업데이트
-        progress.correctCount = correctCount; 
+        progress.correctCount = correctCount;
         progress.doneYn = doneYn;
         progress.lastPlayedAt = new Date();
 
@@ -620,7 +625,7 @@ function makeRandomFruit(questId: number): FruitType {
         3, 1, 4, 5, 2, 5
     ];
 
-    let index = questId - 1;
+    let index = questId - 5; // questId 가 5로 시작해서..
     if (index < 0 && index >= numberArray.length) {
         index = Math.floor(Math.random() * 5) + 1;
     }
