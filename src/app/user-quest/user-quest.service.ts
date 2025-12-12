@@ -205,6 +205,8 @@ export class UserQuestService {
             savedItems.push(savedItem);
         }
 
+        const correctYnCount = savedItems.filter(item => item.correctYn === true).length;
+
         // 3. user_quest_progress 업데이트 (누적 맞힌 문제 수 계산)
         await this.updateUserQuestProgress(userId, questId);
 
@@ -518,7 +520,7 @@ export class UserQuestService {
             .where('uq.user_id = :userId', { userId })
             .andWhere('uq.quest_id = :questId', { questId })
             .andWhere('uqi.correct_yn = :correctYn', { correctYn: true })
-            .select('DISTINCT uqi.quest_item_id', 'questItemId')
+            // .select('DISTINCT uqi.quest_item_id', 'questItemId') // 맞힌 문제 수는 누적된다.=> 중복 제거 안함.
             .getRawMany();
 
         // 누적 맞힌 문제 수 (unique)
@@ -528,7 +530,7 @@ export class UserQuestService {
         const doneYn = correctCount >= progress.passThreshold;
 
         // progress 업데이트
-        progress.correctCount = correctCount;
+        progress.correctCount = correctCount; 
         progress.doneYn = doneYn;
         progress.lastPlayedAt = new Date();
 
