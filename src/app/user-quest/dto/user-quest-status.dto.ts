@@ -29,6 +29,9 @@ export class UserQuestStatusDto {
   @ApiProperty({ description: '퀘스트 시작 여부', example: true })
   isStarted: boolean;
 
+  @ApiProperty({ description: '퀘스트 사용가능 여부', example: true })
+  isEnable: boolean;
+
   @ApiProperty({ description: '정답률 (%)', example: 85.7 })
   accuracyRate: number;
 

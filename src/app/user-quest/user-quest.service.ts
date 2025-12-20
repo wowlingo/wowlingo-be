@@ -71,6 +71,7 @@ export class UserQuestService {
             const totalCount = progress?.totalTargetCount || 70;
             const isCompleted = progress?.doneYn || false;
             const isStarted = progress ? true : false;
+            let isEnable = isStarted;
 
             // 진행률 계산 (totalCount 기준)
             const currentRate = (correctCount / totalCount) * 100;
@@ -91,40 +92,9 @@ export class UserQuestService {
             // const tags = this.generateQuestTags(quest.type);
             const tags = hashtagMap.get(quest.questId) || [];
 
-            const questStatus: UserQuestStatusDto = {
-                questId: quest.questId,
-                title: quest.title,
-                type: quest.type,
-                order: quest.order,
-                tags,
-                correctCount,
-                totalCount,
-                isCompleted,
-                isStarted,
-                accuracyRate,
-                progressRate
-            };
-
-            questStatusList.push(questStatus);
-
-            // 활성 퀘스트 결정: 이전 퀘스트가 완료되고, 현재 퀘스트가 미완료인 첫 번째 퀘스트
-            // TODO:: 다음 문제를 풀기 시작해야만, 
-            if (previousQuestCompleted && !isCompleted && activeQuestId === null) {
-                // activeQuestId = quest.questId;
-
-                // // 열매 정보 생성.
-                // currentFruit = progress?.fruit ?? FruitType.Apple;
-                // 10문제 맞추면 다음 레벨로 넘어감.
-                // '소리의 씨앗(Lv1)' 에서 10문제 맞추면 -> '소리의 새싹(Lv2)'
-                // progressRate < 20% => 레벨 1
-                // progressRate < 40% => 레벨 2
-                // progressRate < 60% => 레벨 3
-                // progressRate < 80% => 레벨 4
-                // progressRate <= 100% => 레벨 5
-                // currentFruitLevel = Math.floor(correctCount / 10) + 1;
-                // nextLevelCount = (currentFruitLevel * 10) - correctCount;
-
-
+            // 이전 퀘스트가 완료 되었다면, 다음 학습 활성화.
+            if (previousQuestCompleted) {
+                isEnable = true;
             }
 
             // 현재 레벨은, 내가 마지막에 풀고 있는 학습을 기준으로 한다. 현재 풀고 있는 학습이 완료가 되더라도 다음 학습을 시작하기 전에는 레벨 리셋 안함.
@@ -151,6 +121,24 @@ export class UserQuestService {
                     nextLevelCount = Math.max(targetCorrectCount - correctCount, 0); // 0보다 작은건 없음.
                 }
             }
+
+            // 학습 상태 저장.
+            const questStatus: UserQuestStatusDto = {
+                questId: quest.questId,
+                title: quest.title,
+                type: quest.type,
+                order: quest.order,
+                tags,
+                correctCount,
+                totalCount,
+                isCompleted,
+                isStarted,
+                isEnable,
+                accuracyRate,
+                progressRate
+            };
+
+            questStatusList.push(questStatus);
 
 
             // 다음 퀘스트를 위해 현재 퀘스트의 완료 상태 저장
