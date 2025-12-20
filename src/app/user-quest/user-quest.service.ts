@@ -72,6 +72,7 @@ export class UserQuestService {
             const isCompleted = progress?.doneYn || false;
             const isStarted = progress ? true : false;
             let isEnable = isStarted;
+            const fruit = progress?.fruit ?? FruitType.Apple; //FruitType;
 
             // 진행률 계산 (totalCount 기준)
             const currentRate = (correctCount / totalCount) * 100;
@@ -135,7 +136,8 @@ export class UserQuestService {
                 isStarted,
                 isEnable,
                 accuracyRate,
-                progressRate
+                progressRate,
+                fruit
             };
 
             questStatusList.push(questStatus);

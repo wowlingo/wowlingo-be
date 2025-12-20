@@ -37,6 +37,9 @@ export class UserQuestStatusDto {
 
   @ApiProperty({ description: '진행률 (%)', example: 17.1 })
   progressRate: number;
+
+  @ApiProperty({ description: '열매 타입' })
+  fruit: FruitType;
 }
 
 export class UserQuestListResponseDto {
