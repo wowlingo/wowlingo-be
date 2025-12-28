@@ -12,6 +12,18 @@ export class AdminQuestResDto {
   @IsString()
   type: string;
 
+  @Type(() => Number)
+  @IsNumber()
+  order: number;
+
+  @Type(() => Number)
+  @IsNumber()
+  questItemCount: number;
+
+  @Type(() => Number)
+  @IsNumber()
+  actualItemCount: number; // 실제 등록된 Quest Item 개수
+
   @IsArray()
   hashtags: string[];
 }

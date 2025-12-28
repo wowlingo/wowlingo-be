@@ -14,10 +14,13 @@ import { AdminQuestItemResDto } from './dto/admin-quest-item-res.dto';
 import { AdminQuestItemUnitResDto } from './dto/admin-quest-item-unit-res.dto';
 import { QuestResDto } from './dto/quest-res.dto';
 import { QuestItemUnitHashtag } from '../hashtag/entities/quest-item-unit-hashtag.entity';
+import { QuestHashtag } from '../hashtag/entities/quest-hashtag.entity';
 import { CreateQuestItemUnitDto } from './dto/create-quest-item-unit.dto';
 import { UpdateQuestItemUnitDto } from './dto/update-quest-item-unit.dto';
 import { CreateQuestItemDto } from './dto/create-quest-item.dto';
 import { UpdateQuestItemDto } from './dto/update-quest-item.dto';
+import { CreateQuestDto } from './dto/create-quest.dto';
+import { UpdateQuestDto } from './dto/update-quest.dto';
 
 
 @Injectable()
@@ -39,6 +42,8 @@ export class QuestService {
     private hashtagRepository: Repository<Hashtag>,
     @InjectRepository(QuestItemUnitHashtag)
     private questItemUnitHashtagRepository: Repository<QuestItemUnitHashtag>,
+    @InjectRepository(QuestHashtag)
+    private questHashtagRepository: Repository<QuestHashtag>,
     private dataSource: DataSource,
   ) { }
 
@@ -400,6 +405,24 @@ export class QuestService {
   }
 
   async removeQuest(id: number): Promise<void> {
+    const quest = await this.questRepository.findOne({
+      where: { questId: id },
+    });
+
+    if (!quest) {
+      throw new NotFoundException(`Quest with ID ${id} not found`);
+    }
+
+    const questItemsCount = await this.questItemRepository.count({
+      where: { questId: id },
+    });
+
+    if (questItemsCount > 0) {
+      throw new BadRequestException(
+        `이 Quest는 ${questItemsCount}개의 Quest Item이 등록되어 있습니다. Quest를 삭제하려면 먼저 모든 Quest Item을 삭제해주세요.`,
+      );
+    }
+
     await this.questRepository.delete(id);
   }
 
@@ -414,6 +437,122 @@ export class QuestService {
   async createQuest(questData: Partial<Quest>): Promise<Quest> {
     const quest = this.questRepository.create(questData);
     return this.questRepository.save(quest);
+  }
+
+  /**
+   * Quest 생성 with Hashtag 연결
+   */
+  async createQuestWithHashtags(dto: CreateQuestDto): Promise<Quest> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      // hashtagIds가 제공되었다면 검증
+      if (dto.hashtagIds && dto.hashtagIds.length > 0) {
+        const hashtags = await this.hashtagRepository.findBy({
+          hashtagId: In(dto.hashtagIds),
+        });
+
+        if (hashtags.length !== dto.hashtagIds.length) {
+          throw new BadRequestException('일부 해시태그를 찾을 수 없습니다.');
+        }
+      }
+
+      // Quest 생성
+      const quest = queryRunner.manager.create(Quest, {
+        title: dto.title,
+        type: dto.type,
+        order: dto.order,
+        questItemCount: dto.questItemCount,
+      });
+      const savedQuest = await queryRunner.manager.save(Quest, quest);
+
+      // Quest-Hashtag 연결
+      if (dto.hashtagIds && dto.hashtagIds.length > 0) {
+        const questHashtags = dto.hashtagIds.map(hashtagId =>
+          queryRunner.manager.create(QuestHashtag, {
+            questId: savedQuest.questId,
+            hashtagId: hashtagId,
+          }),
+        );
+        await queryRunner.manager.save(QuestHashtag, questHashtags);
+      }
+
+      await queryRunner.commitTransaction();
+      return savedQuest;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  /**
+   * Quest 수정 with Hashtag 재연결
+   */
+  async updateQuestWithHashtags(id: number, dto: UpdateQuestDto): Promise<Quest> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const existingQuest = await this.questRepository.findOne({
+        where: { questId: id },
+      });
+
+      if (!existingQuest) {
+        throw new NotFoundException(`Quest ID ${id}를 찾을 수 없습니다.`);
+      }
+
+      // Quest 기본 정보 업데이트
+      const updateData: Partial<Quest> = {};
+      if (dto.title) updateData.title = dto.title;
+      if (dto.type) updateData.type = dto.type;
+      if (dto.order !== undefined) updateData.order = dto.order;
+      if (dto.questItemCount !== undefined) updateData.questItemCount = dto.questItemCount;
+
+      await queryRunner.manager.update(Quest, id, updateData);
+
+      // Hashtag 재연결 (hashtagIds가 제공되었을 경우에만)
+      if (dto.hashtagIds !== undefined) {
+        if (dto.hashtagIds.length > 0) {
+          // 해시태그 검증
+          const hashtags = await this.hashtagRepository.findBy({
+            hashtagId: In(dto.hashtagIds),
+          });
+
+          if (hashtags.length !== dto.hashtagIds.length) {
+            throw new BadRequestException('일부 해시태그를 찾을 수 없습니다.');
+          }
+        }
+
+        // 기존 연결 삭제
+        await queryRunner.manager.delete(QuestHashtag, { questId: id });
+
+        // 새로운 연결 생성
+        if (dto.hashtagIds.length > 0) {
+          const questHashtags = dto.hashtagIds.map(hashtagId =>
+            queryRunner.manager.create(QuestHashtag, {
+              questId: id,
+              hashtagId: hashtagId,
+            }),
+          );
+          await queryRunner.manager.save(QuestHashtag, questHashtags);
+        }
+      }
+
+      await queryRunner.commitTransaction();
+
+      // 업데이트된 Quest 반환
+      return this.findOneQuest(id);
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   // QuestItem 관련 메서드
@@ -475,18 +614,30 @@ export class QuestService {
     for (const hashtag of hashtags) {
       hashtagMap.set(hashtag.quest_id, hashtag.names);
     }
-    // for (const hashtag of hashtags) {
-    //     if (!hashtagMap.has(hashtag.questId)) {
-    //         hashtagMap.set(hashtag.quest_id, []);
-    //     }
-    //     hashtagMap.get(hashtag.quest_id)!.push(hashtag.name);
-    // }
+
+    // 각 Quest의 실제 등록된 Quest Item 개수 조회
+    const questIds = quests.map(q => q.questId);
+    const itemCounts = await this.questItemRepository
+      .createQueryBuilder('qi')
+      .select('qi.quest_id', 'questId')
+      .addSelect('COUNT(*)', 'count')
+      .where('qi.quest_id IN (:...questIds)', { questIds })
+      .groupBy('qi.quest_id')
+      .getRawMany();
+
+    const itemCountMap = new Map<number, number>();
+    for (const item of itemCounts) {
+      itemCountMap.set(Number(item.questId), Number(item.count));
+    }
 
     return quests.map(quest => {
       const adminQuestResDto = new AdminQuestResDto();
       adminQuestResDto.questId = quest.questId;
       adminQuestResDto.title = quest.title;
       adminQuestResDto.type = quest.type;
+      adminQuestResDto.order = quest.order;
+      adminQuestResDto.questItemCount = quest.questItemCount;
+      adminQuestResDto.actualItemCount = itemCountMap.get(quest.questId) || 0;
       adminQuestResDto.hashtags = hashtagMap.get(quest.questId) || [];
       return adminQuestResDto;
     });
