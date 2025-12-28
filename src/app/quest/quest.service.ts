@@ -680,38 +680,41 @@ export class QuestService {
       return [];
     }
 
-    const rows = await this.questItemUnitRepository.createQueryBuilder('qiu')
-      .select('qiu.*')
-      .addSelect('qi.quest_item_id', 'grouping_key')
-      .innerJoin('quest_items', 'qi', `qi.${joinColumn} = qiu.quest_item_unit_id`)
+    // quest_items를 조회해서 각 item의 unit ID를 가져옴
+    const questItems = await this.questItemRepository
+      .createQueryBuilder('qi')
+      .select(`qi.quest_item_id`, 'questItemId')
+      .addSelect(`qi.${joinColumn}`, 'unitId')
       .where('qi.quest_item_id IN (:...questItemIds)', { questItemIds })
+      .andWhere(`qi.${joinColumn} IS NOT NULL`)
       .getRawMany();
 
-    // // quest_id별로 그룹핑
-    // const grouped = rows.reduce((acc, row) => {
-    //   const key = row.grouping_key;
-    //   if (!acc[key]) {
-    //     acc[key] = [];
-    //   }
-    //   acc[key].push(row);
-    //   return acc;
-    // }, {} as Record<number, QuestItemUnit>);
+    // 모든 unit ID 수집
+    const unitIds = questItems
+      .map(item => item.unitId)
+      .filter((id): id is number => id != null);
 
-    // 객체를 배열 형태로 변환
-    // return Object.entries(grouped).map(([quest_item_id, unit]) => ({
-    //   quest_item_id: Number(quest_item_id),
-    //   unit,
-    // }));
+    if (unitIds.length === 0) {
+      return [];
+    }
 
-    return rows.map(row => {
-      const { grouping_key, ...unitProperties } = row;
+    // unit 정보 조회
+    const units = await this.questItemUnitRepository
+      .createQueryBuilder('qiu')
+      .where('qiu.quest_item_unit_id IN (:...unitIds)', { unitIds })
+      .getMany();
 
-      return {
-        quest_item_id: Number(grouping_key),
-        unit: unitProperties as QuestItemUnit,
-      };
+    // unitId를 키로 하는 맵 생성
+    const unitMap = new Map<number, QuestItemUnit>();
+    units.forEach(unit => {
+      unitMap.set(unit.questItemUnitId, unit);
     });
 
+    // quest_item_id와 unit을 매핑
+    return questItems.map(item => ({
+      quest_item_id: Number(item.questItemId),
+      unit: unitMap.get(Number(item.unitId))!,
+    })).filter(item => item.unit != null);
   }
 
   async makeQuestItemsAdmin(
