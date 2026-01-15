@@ -1,0 +1,223 @@
+import { Controller, Get, Post, Put, Delete, Param, Body, ParseIntPipe, Query } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
+import { QuestService } from './quest.service';
+import { HashtagService } from '../hashtag/hashtag.service';
+import { Quest } from './entities/quest.entity';
+import { QuestItem } from './entities/quest-item.entity';
+import { QuestItemUnit } from './entities/quest-item-unit.entity';
+import { BaseResponse } from '../../common/dto/base-response.dto';
+import { QuestDataDto } from './dto/quest-data.dto';
+import { AdminQuestResDto } from './dto/admin-quest-res.dto';
+import { AdminQuestItemResDto } from './dto/admin-quest-item-res.dto';
+import { AdminQuestItemUnitResDto } from './dto/admin-quest-item-unit-res.dto';
+import { CreateQuestItemUnitDto } from './dto/create-quest-item-unit.dto';
+import { UpdateQuestItemUnitDto } from './dto/update-quest-item-unit.dto';
+import { CreateQuestItemDto } from './dto/create-quest-item.dto';
+import { UpdateQuestItemDto } from './dto/update-quest-item.dto';
+import { CreateQuestDto } from './dto/create-quest.dto';
+import { UpdateQuestDto } from './dto/update-quest.dto';
+
+
+
+@ApiTags('Admin Quests')
+@Controller('admin/quest')
+export class QuestAdminController {
+  constructor(
+    private readonly questService: QuestService,
+    private readonly hashtagService: HashtagService,
+  ) { }
+
+  // Quest 엔드포인트
+  @Get()
+  @ApiOperation({ summary: '모든 퀘스트 조회' })
+  @ApiResponse({ status: 200, description: '퀘스트 목록 조회 성공' })
+  async findAllQuests(): Promise<BaseResponse<AdminQuestResDto[]>> {
+    const quests = await this.questService.findAllQuests();
+    const questIds = quests.flatMap(it => it.questId).filter((id): id is number => id !== null);
+    const hashtags = await this.hashtagService.findGroupNamesByQuests(questIds);
+
+    const resDtos = await this.questService.makeQuestsAdmin(quests, hashtags);
+
+    return BaseResponse.success(resDtos, '퀘스트 목록을 성공적으로 조회했습니다.');
+  }
+
+  // QuestItem 엔드포인트
+  @Get('items')
+  @ApiOperation({ summary: '모든 퀘스트 아이템 조회' })
+  @ApiQuery({ name: 'questId', required: false, description: '퀘스트 ID로 필터링' })
+  @ApiResponse({ status: 200, description: '퀘스트 아이템 목록 조회 성공' })
+  async findAllQuestItems(@Query('questId') questId?: string): Promise<BaseResponse<AdminQuestItemResDto[]>> {
+    let questItems: QuestItem[];
+
+    if (questId) {
+      questItems = await this.questService.findQuestItemsByQuestId(parseInt(questId));
+    } else {
+      questItems = await this.questService.findAllQuestItems();
+    }
+
+    const questItemIds = questItems.flatMap(it => it.questItemId).filter((id): id is number => id !== null);
+    const questItemUnits1 = await this.questService.findQuestItemUnitsByQuest1QuestItemIds(questItemIds);
+    const questItemUnits2 = await this.questService.findQuestItemUnitsByQuest2QuestItemIds(questItemIds);
+    const questItemUnits = await this.questService.findAllQuestItemUnits();
+
+    const resDtos = await this.questService.makeQuestItemsAdmin(questItems, questItemUnits1, questItemUnits2, questItemUnits);
+
+    return BaseResponse.success(resDtos, '퀘스트 아이템 목록을 성공적으로 조회했습니다.');
+  }
+
+  // QuestItemUnit 엔드포인트
+  @Get('units')
+  @ApiOperation({ summary: '모든 퀘스트 아이템 유닛 조회' })
+  // @ApiQuery({ name: 'questItemId', required: false, description: '퀘스트 아이템 ID로 필터링' })
+  @ApiResponse({ status: 200, description: '퀘스트 아이템 유닛 목록 조회 성공' })
+  async findAllQuestItemUnits(): Promise<BaseResponse<AdminQuestItemUnitResDto[]>> {
+    let questItemUnits: QuestItemUnit[];
+
+    // if (questItemId) {
+    // questItemUnits = await this.questService.findQuestItemUnitsByQuestItemId(parseInt(questItemId));
+    // } else {
+    questItemUnits = await this.questService.findAllQuestItemUnits();
+    // }
+
+    const questItemUnitIds = questItemUnits.flatMap(it => it.questItemUnitId).filter((id): id is number => id !== null);
+    const hashtags = await this.hashtagService.findGroupNamesByQuestItemUnits(questItemUnitIds);
+
+    const resDtos = await this.questService.makeQuestItemUnitsAdmin(questItemUnits, hashtags);
+
+    return BaseResponse.success(resDtos, '퀘스트 아이템 유닛 목록을 성공적으로 조회했습니다.');
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: '특정 퀘스트 조회' })
+  @ApiResponse({ status: 200, description: '퀘스트 조회 성공' })
+  async findQuestById(@Param('id', ParseIntPipe) id: number): Promise<BaseResponse<QuestDataDto>> {
+    const quest = await this.questService.findQuestDataById(id);
+    return BaseResponse.success(quest, '퀘스트 정보를 성공적으로 조회했습니다.');
+  }
+
+  @Post()
+  @ApiOperation({ summary: '새 퀘스트 생성 (with Hashtags)' })
+  @ApiResponse({ status: 201, description: '퀘스트 생성 성공' })
+  async createQuest(@Body() dto: CreateQuestDto): Promise<BaseResponse<Quest>> {
+    const quest = await this.questService.createQuestWithHashtags(dto);
+    return BaseResponse.success(quest, '퀘스트가 성공적으로 생성되었습니다.');
+  }
+
+  @Put(':id')
+  @ApiOperation({ summary: '코스 정보 수정 (with Hashtags)' })
+  @ApiResponse({ status: 200, description: '코스 정보 수정 성공' })
+  async updateQuest(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateQuestDto,
+  ): Promise<BaseResponse<Quest>> {
+    const quest = await this.questService.updateQuestWithHashtags(id, dto);
+    return BaseResponse.success(quest, '코스 정보가 성공적으로 수정되었습니다.');
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: '코스 삭제' })
+  @ApiResponse({ status: 200, description: '코스 삭제 성공' })
+  async removeQuest(@Param('id', ParseIntPipe) id: number): Promise<BaseResponse<void>> {
+    await this.questService.removeQuest(id);
+    return BaseResponse.success(undefined, '코스가 성공적으로 삭제되었습니다.');
+  }
+
+  @Get('items/:id')
+  @ApiOperation({ summary: '특정 퀘스트 아이템 조회' })
+  @ApiResponse({ status: 200, description: '퀘스트 아이템 조회 성공' })
+  async findQuestItemById(@Param('id', ParseIntPipe) id: number): Promise<BaseResponse<any>> {
+    const questItem = await this.questService.findQuestItemById(id);
+
+    const unitIds = [
+      questItem.question1,
+      questItem.question2,
+      questItem.answer1,
+      questItem.answer2,
+    ].filter(id => id != null);
+
+    const units = await this.questService.findQuestItemUnitsByIds(unitIds);
+    const unitMap = new Map(units.map(u => [u.questItemUnitId, u]));
+
+    const populatedItem = {
+      ...questItem,
+      questUnit1: questItem.question1 ? unitMap.get(Number(questItem.question1)) : null,
+      questUnit2: questItem.question2 ? unitMap.get(Number(questItem.question2)) : null,
+      answerUnit1: questItem.answer1 ? unitMap.get(Number(questItem.answer1)) : null,
+      answerUnit2: questItem.answer2 ? unitMap.get(Number(questItem.answer2)) : null,
+    };
+
+    return BaseResponse.success(populatedItem, '퀘스트 아이템 정보를 성공적으로 조회했습니다.');
+  }
+
+  @Post('items')
+  @ApiOperation({ summary: '새 퀘스트 아이템 생성 (with validation)' })
+  @ApiResponse({ status: 201, description: '퀘스트 아이템 생성 성공' })
+  async createQuestItem(@Body() dto: CreateQuestItemDto): Promise<BaseResponse<QuestItem>> {
+    const questItem = await this.questService.createQuestItemWithValidation(dto);
+    return BaseResponse.success(questItem, '퀘스트 아이템이 성공적으로 생성되었습니다.');
+  }
+
+  @Put('items/:id')
+  @ApiOperation({ summary: '퀘스트 아이템 수정 (with validation)' })
+  @ApiResponse({ status: 200, description: '퀘스트 아이템 수정 성공' })
+  async updateQuestItem(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateQuestItemDto,
+  ): Promise<BaseResponse<QuestItem>> {
+    const questItem = await this.questService.updateQuestItemWithValidation(id, dto);
+    return BaseResponse.success(questItem, '퀘스트 아이템이 성공적으로 수정되었습니다.');
+  }
+
+  @Delete('items/:id')
+  @ApiOperation({ summary: '퀘스트 아이템 삭제 (사용 중이면 삭제 불가)' })
+  @ApiResponse({ status: 200, description: '퀘스트 아이템 삭제 성공' })
+  async deleteQuestItem(@Param('id', ParseIntPipe) id: number): Promise<BaseResponse<void>> {
+    await this.questService.deleteQuestItemWithCheck(id);
+    return BaseResponse.success(undefined, '퀘스트 아이템이 성공적으로 삭제되었습니다.');
+  }
+
+  @Get('units/:id')
+  @ApiOperation({ summary: '특정 퀘스트 아이템 유닛 조회' })
+  @ApiResponse({ status: 200, description: '퀘스트 아이템 유닛 조회 성공' })
+  async findQuestItemUnitById(@Param('id', ParseIntPipe) id: number): Promise<BaseResponse<QuestItemUnit>> {
+    const questItemUnit = await this.questService.findQuestItemUnitById(id);
+    return BaseResponse.success(questItemUnit, '퀘스트 아이템 유닛 정보를 성공적으로 조회했습니다.');
+  }
+
+  @Post('units')
+  @ApiOperation({ summary: '새 퀘스트 아이템 유닛 생성 (Hashtag 연결 포함)' })
+  @ApiResponse({ status: 201, description: '퀘스트 아이템 유닛 생성 성공' })
+  async createQuestItemUnit(@Body() dto: CreateQuestItemUnitDto): Promise<BaseResponse<QuestItemUnit>> {
+    const questItemUnit = await this.questService.createQuestItemUnitWithHashtags(dto);
+    return BaseResponse.success(questItemUnit, '퀘스트 아이템 유닛이 성공적으로 생성되었습니다.');
+  }
+
+  @Put('units/:id')
+  @ApiOperation({ summary: '퀘스트 아이템 유닛 수정 (Hashtag 재연결 포함)' })
+  @ApiResponse({ status: 200, description: '퀘스트 아이템 유닛 수정 성공' })
+  async updateQuestItemUnit(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateQuestItemUnitDto,
+  ): Promise<BaseResponse<QuestItemUnit>> {
+    const questItemUnit = await this.questService.updateQuestItemUnitWithHashtags(id, dto);
+    return BaseResponse.success(questItemUnit, '퀘스트 아이템 유닛이 성공적으로 수정되었습니다.');
+  }
+
+  @Delete('units/:id')
+  @ApiOperation({ summary: '퀘스트 아이템 유닛 삭제' })
+  @ApiResponse({ status: 200, description: '퀘스트 아이템 유닛 삭제 성공' })
+  @ApiResponse({ status: 400, description: 'Quest Item에서 사용 중인 Unit은 삭제 불가' })
+  async deleteQuestItemUnit(@Param('id', ParseIntPipe) id: number): Promise<BaseResponse<void>> {
+    await this.questService.deleteQuestItemUnit(id);
+    return BaseResponse.success(undefined, '퀘스트 아이템 유닛이 성공적으로 삭제되었습니다.');
+  }
+
+  @Get('units/:id/quests')
+  @ApiOperation({ summary: '특정 Unit이 사용된 Quest 목록 조회' })
+  @ApiResponse({ status: 200, description: 'Unit이 사용된 Quest 목록 조회 성공' })
+  async findQuestsByUnitId(@Param('id', ParseIntPipe) id: number): Promise<BaseResponse<Quest[]>> {
+    const quests = await this.questService.findQuestsByUnitId(id);
+    return BaseResponse.success(quests, 'Unit이 사용된 Quest 목록을 성공적으로 조회했습니다.');
+  }
+
+}

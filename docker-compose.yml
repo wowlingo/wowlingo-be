@@ -14,6 +14,20 @@ services:
       - "23306:3306"
     volumes:
       - db_data:/var/lib/mysql
+
+  app-dev:
+    build:
+      context: .
+      target: dev
+    container_name: wowlingo_be
+    ports:
+      - "3000:3000"
+    depends_on:
+      - database
+    restart: always
+    volumes:
+      - /home/ubuntu/wowlingo/sounds:/usr/src/app/sounds
+
     
 volumes:
   db_data:

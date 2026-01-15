@@ -14,32 +14,22 @@ export class UserQuestItemDto {
   questItemId: number;
 
   @ApiProperty({
-    description: 'Same/Different 답변',
-    example: 'same',
+    description: '사용자 답안(선택한 답변 or Same/Different 답변 or 평서문/의문문 답변)',
+    example: '13',
+    required: false,
+  })
+  @Type(() => String)
+  @IsString()
+  userAnswer: string;
+
+  @ApiProperty({
+    description: '사용자 답안 텍스트 (choice 타입일 때 questItemUnit의 str)',
+    example: 'Hello',
     required: false,
   })
   @IsOptional()
   @IsString()
-  userAnswerOx: string | null;
-
-  @ApiProperty({
-    description: '평서문/의문문 답변',
-    example: 'statement',
-    required: false,
-  })
-  @IsOptional()
-  @IsString()
-  userAnswerSq: string | null;
-
-  @ApiProperty({
-    description: '사용자 답안 (quest_item_unit_id)',
-    example: 13,
-    required: false,
-  })
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  userAnswer: number | null;
+  userAnswerText?: string;
 
   @ApiProperty({
     description: '정답 여부',

@@ -5,7 +5,7 @@ import { Repository } from 'typeorm';
 import { UserQuestService } from '../user-quest.service';
 import { QuestItem } from '../../quest/entities/quest-item.entity';
 import { UserCourse } from '../../user/entities/user-course.entity';
-import { UserQuest } from '../entities/user-quest.entity';
+import { UserQuest } from '../entities/user-quest-session.entity';
 import { Quest } from '../../quest/entities/quest.entity';
 import { UserQuestItem } from '../entities/user-quest-item.entity';
 import { NotFoundException } from '@nestjs/common';

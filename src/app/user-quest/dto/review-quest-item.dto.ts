@@ -1,6 +1,6 @@
 import { Type } from 'class-transformer';
 import { IsArray, ValidateNested } from 'class-validator';
-import { SoundDto } from './sound.dto';
+import { SoundDto } from '../../quest/dto/sound.dto';
 
 export class OptionDto {
   type?: string;
@@ -14,19 +14,24 @@ export class AnswerDetailDto {
   units: string[];        // 관련된 unit의 str들
 }
 
-export class QuestItemDataDto {
+export class ReviewQuestItemDto {
+  questId: number;
+
+  title: string;
+
+  type: string;
+
   questItemId: number;
 
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => SoundDto)
-  units: SoundDto[];
+  sounds: SoundDto[];
+
+  units: string[];
 
   // answer는 string (statement-question, same-different) 또는 number (기타 타입의 quest item unit id)
-  answer: string | number | null;
-
-  // 정답 상세 정보 (화면 표시용)
-  answerDetail: AnswerDetailDto;
+  answer?: string | number | null;
 
   // 선택지 (statement-question, same-different, choice 등)
   options?: OptionDto[];

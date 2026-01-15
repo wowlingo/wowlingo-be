@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Body, ParseIntPipe, Query, BadRequestException, ParseArrayPipe } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Param, Body, ParseIntPipe, Query, BadRequestException, ParseArrayPipe } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { BaseResponse } from '../../common/dto/base-response.dto';
 import { VocabularyService } from './vocabulary.service';
@@ -59,24 +59,47 @@ export class VocabularyController {
         return BaseResponse.success(vacabulary, '단어장 목록을 성공적으로 조회했습니다.');
     }
 
-    // @Get(':id')
-    // @ApiOperation({ summary: '특정 퀘스트 조회' })
-    // @ApiResponse({ status: 200, description: '퀘스트 조회 성공' })
-    // async findQuestById(@Param('id', ParseIntPipe) id: number): Promise<BaseResponse<QuestDataDto>> {
-    //     const quest = await this.questService.findQuestDataById(id);
-    //     return BaseResponse.success(quest, '퀘스트 정보를 성공적으로 조회했습니다.');
-    // }
-
     @Post()
     @ApiOperation({ summary: '단어장 등록' })
     @ApiResponse({ status: 200, description: '단어장 생성 성공' })
-    async createVocab(@Body() vocabReqDto: VocabQuestReqDto): Promise<BaseResponse<Vocabulary>> {
+    async createVocab(@Body() vocabReqDto: VocabQuestReqDto): Promise<BaseResponse<Vocabulary[]>> {
 
-        const hashtags = await this.hashtagService.findAllByQuestItemUnitId(vocabReqDto.questItemUnitId);
-        const questItemUnit = await this.questService.findQuestItemUnitById(vocabReqDto.questItemUnitId);
+        const questItem = await this.questService.findQuestItemById(vocabReqDto.questItemId);
 
-        const vocab = await this.vocabularyService.createVocab(vocabReqDto.userId, hashtags, questItemUnit);
+        if (!questItem) {
+            return BaseResponse.success([], '유효하지 않은 Quest Item ID입니다.');
+        }
 
-        return BaseResponse.success(vocab, '단어장 성공적으로 생성/등록 되었습니다.');
+        const potentialUnitIds = [questItem.question1, questItem.question2];
+        const unitIds = Array.from(
+            new Set( // 중복제거.
+                potentialUnitIds.filter((id): id is number => id !== null && id !== undefined)
+            )
+        );
+        if (unitIds.length === 0) {
+            return BaseResponse.success([], '단어장을 생성할 질문 항목이 없습니다.');
+        }
+
+        const vocabs: Vocabulary[] = await Promise.all(
+            unitIds.map(async (unitId) => {
+                const [hashtags, unit] = await Promise.all([
+                    this.hashtagService.findAllByQuestItemUnitId(unitId),
+                    this.questService.findQuestItemUnitById(unitId),
+                ]);
+
+                return this.vocabularyService.createVocab(vocabReqDto.userId, hashtags, unit);
+            }),
+        );
+
+        return BaseResponse.success(vocabs, '단어장 성공적으로 생성/등록 되었습니다.');
     }
+
+    @Delete(':id')
+    @ApiOperation({ summary: '특정 단어장 단어 삭제' })
+    @ApiResponse({ status: 200, description: '단어장 단어 삭제 성공' })
+    async findQuestById(@Param('id', ParseIntPipe) id: number): Promise<BaseResponse<void>> {
+        await this.vocabularyService.removeVoca(id);
+        return BaseResponse.success(undefined, '퀘스트 정보를 성공적으로 조회했습니다.');
+    }
+
 }

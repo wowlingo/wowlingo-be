@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Hashtag } from './entities/hashtag.entity';
 import { QuestHashtag } from './entities/quest-hashtag.entity';
 import { QuestItemUnitHashtag } from './entities/quest-item-unit-hashtag.entity';
 import { VocabHashtag } from './entities/vocab-hashtag.entity';
+import { CreateHashtagDto } from './dto/create-hashtag.dto';
 
 
 @Injectable()
@@ -14,6 +15,12 @@ export class HashtagService {
         @InjectRepository(QuestHashtag) private questHashtagRepository: Repository<QuestHashtag>,
         @InjectRepository(VocabHashtag) private vocabHashtagRepository: Repository<VocabHashtag>,
     ) { }
+
+    async findAll(): Promise<Hashtag[]> {
+        return this.hashtagRepository.find({
+            order: { hashtagId: 'ASC' },
+        });
+    }
 
     async findAllByQuestItemUnitId(questItemUnitId: number): Promise<Hashtag[]> {
         return this.hashtagRepository
@@ -45,4 +52,113 @@ export class HashtagService {
             .where('qiuh.quest_item_unit_id IN (:...ids)', { ids })
             .getMany();
     }
+
+    async findGroupNamesByQuests(questIds: number[]) {
+        if (!questIds || questIds.length === 0) {
+            return [];
+        }
+
+        const rows = await this.hashtagRepository
+            .createQueryBuilder('h')
+            .select(['qh.quest_id AS quest_id', 'h.name AS name'])
+            .innerJoin('quest_hashtags', 'qh', 'qh.hashtag_id = h.hashtag_id')
+            .where('qh.quest_id IN (:...questIds)', { questIds })
+            .getRawMany();
+
+        // quest_id별로 그룹핑
+        const grouped = rows.reduce((acc, row) => {
+            if (!acc[row.quest_id]) {
+                acc[row.quest_id] = [];
+            }
+            acc[row.quest_id].push(row.name);
+            return acc;
+        }, {} as Record<number, string[]>);
+
+        // 객체를 배열 형태로 변환
+        return Object.entries(grouped).map(([quest_id, names]) => ({
+            quest_id: Number(quest_id),
+            names,
+        }));
+
+    }
+
+    async findGroupNamesByQuestItemUnits(questItemUnitIds: number[]) {
+        if (!questItemUnitIds || questItemUnitIds.length === 0) {
+            return [];
+        }
+
+        const rows = await this.hashtagRepository
+            .createQueryBuilder('h')
+            .select(['qh.quest_item_unit_id AS quest_item_unit_id', 'h.name AS name'])
+            .innerJoin('quest_item_unit_hashtags', 'qh', 'qh.hashtag_id = h.hashtag_id')
+            .where('qh.quest_item_unit_id IN (:...questItemUnitIds)', { questItemUnitIds })
+            .getRawMany();
+
+        // quest_item_unit_id별로 그룹핑
+        const grouped = rows.reduce((acc, row) => {
+            if (!acc[row.quest_item_unit_id]) {
+                acc[row.quest_item_unit_id] = [];
+            }
+            acc[row.quest_item_unit_id].push(row.name);
+            return acc;
+        }, {} as Record<number, string[]>);
+
+        // 객체를 배열 형태로 변환
+        return Object.entries(grouped).map(([quest_item_unit_id, names]) => ({
+            quest_item_unit_id: Number(quest_item_unit_id),
+            names,
+        }));
+    }
+
+    async findAllByQuestItemId(questItemId: number): Promise<Hashtag[]>  {
+        return this.hashtagRepository
+            .createQueryBuilder('h')
+            .innerJoin('quest_hashtags', 'qh', 'qh.hashtag_id = h.hashtag_id')
+            .innerJoin('quest_items', 'qi', 'qi.quest_id = qh.quest_id ')
+            .where('qi.quest_item_id = :questItemId', { questItemId })
+            .getMany();
+    }
+
+    async getHashtagMapByQuests(questIds: number[]) {
+        const hashtags = (await this.findGroupNamesByQuests(questIds)) as {
+            quest_id: number;
+            names: string[];
+        }[];
+        const hashtagMap = new Map<number, string[]>();
+        for (const hashtag of hashtags) {
+            hashtagMap.set(hashtag.quest_id, hashtag.names);
+        }
+        return hashtagMap;
+    }
+
+    /**
+     * 새로운 해시태그 생성
+     */
+    async create(dto: CreateHashtagDto): Promise<Hashtag> {
+        // code 중복 체크
+        const existingByCode = await this.hashtagRepository.findOne({
+            where: { code: dto.code },
+        });
+
+        if (existingByCode) {
+            throw new ConflictException(`이미 존재하는 해시태그 코드입니다: ${dto.code}`);
+        }
+
+        // name 중복 체크
+        const existingByName = await this.hashtagRepository.findOne({
+            where: { name: dto.name },
+        });
+
+        if (existingByName) {
+            throw new ConflictException(`이미 존재하는 해시태그 이름입니다: ${dto.name}`);
+        }
+
+        const hashtag = this.hashtagRepository.create({
+            code: dto.code,
+            name: dto.name,
+        });
+
+        return this.hashtagRepository.save(hashtag);
+    }
+
 }

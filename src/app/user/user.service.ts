@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { JwtService } from '@nestjs/jwt';
 import { Between, Repository } from 'typeorm';
-import { User } from './entities/user.entity'
+import { User } from './entities/user.entity';
 import { UserQuestAttempt } from './entities/user-quest-attempt.entity';
+import { AiFeedback } from './entities/ai-feedback.entity';
 
 @Injectable()
 export class UserService {
@@ -11,50 +13,25 @@ export class UserService {
     private userRepository: Repository<User>,
     @InjectRepository(UserQuestAttempt)
     private userQuestAttemptRepository: Repository<UserQuestAttempt>,
-  ) {}
-
-  async findAll(): Promise<User[]> {
-    return this.userRepository.find({
-      relations: ['userCourses'],
-    });
-  }
-
-  async findOne(id: number): Promise<User> {
-    return this.userRepository.findOneOrFail({
-      where: { userId: id },
-      relations: ['userCourses'],
-    });
-  }
-
-  async findByNickname(nickname: string): Promise<User> {
-    return this.userRepository.findOneOrFail({
-      where: { nickname },
-      relations: ['userCourses'],
-    });
-  }
+    @InjectRepository(AiFeedback)
+    private aiFeedbackRepository: Repository<AiFeedback>,
+    private readonly jwtService: JwtService,
+  ) { }
 
   async create(userData: Partial<User>): Promise<User> {
     const user = this.userRepository.create(userData);
     return this.userRepository.save(user);
   }
 
-  async update(id: number, userData: Partial<User>): Promise<User> {
-    await this.userRepository.update(id, userData);
-    return this.findOne(id);
-  }
-
-  async remove(id: number): Promise<void> {
-    await this.userRepository.delete(id);
-  }
-  
-  async login(nickname: string): Promise<Boolean> {
+  async login(nickname: string) {
     // 1. 이전에 접속한 적 있는 닉네임일 경우 -> 이어서 진행.
     // 2. 접속한 적 없는 닉네임일 경우 -> 신규 진행.
-    const user = await this.userRepository.findOne({
+    let user = await this.userRepository.findOne({
       where: { nickname },
       relations: ['userQuestAttempts'],
     });
 
+    let isNewUser = false;
     if (user) {
       const today = new Date();
       const questAttempt = user.userQuestAttempts.find(attempt => {
@@ -65,21 +42,20 @@ export class UserService {
           loginDate.getDate() === today.getDate()
         );
       });
-      // 오늘 접속한 적 있으면.
-      if (questAttempt) {
-        return true;
+      // 오늘 접속한 적 없으면.
+      if (!questAttempt) {
+        // 오늘 접속 정보 저장.
+        const newUserQuestAttempt = this.userQuestAttemptRepository.create({
+          userId: user.userId,
+          loginDate: new Date(),
+        });
+        await this.userQuestAttemptRepository.save(newUserQuestAttempt);
       }
-
-      // 오늘 접속 정보 저장.
-      const newUserQuestAttempt = this.userQuestAttemptRepository.create({
-        userId: user.userId,
-        loginDate: new Date(),
-      });
-      await this.userQuestAttemptRepository.save(newUserQuestAttempt);
     }
     else {
-      await this.userRepository.manager.transaction(async (manager) => {
+      user = await this.userRepository.manager.transaction(async (manager) => {
         // 신규 닉네임 저장.
+        isNewUser = true;
         const newUser = manager.create(User, {
           auth: '',
           authType: '',
@@ -95,11 +71,23 @@ export class UserService {
 
         await manager.save(UserQuestAttempt, newUserQuestAttempt);
 
-        return true;
+        return savedUser;
       });
     }
 
-    return false;
+    // 토큰 생성 (Payload 구성)
+    const payload = { username: user.nickname, userId: user.userId, isNewUser: isNewUser };
+    const accessToken = this.jwtService.sign(payload);
+
+    const username = user.nickname;
+    const userId = user.userId;
+
+    return {
+      accessToken,
+      username,
+      userId,
+      isNewUser
+    };
   }
 
   async getUserQuestAttempts(userId: number, year: number, month: number) {
@@ -108,8 +96,71 @@ export class UserService {
     return this.userQuestAttemptRepository.find({
       where: {
         userId: userId,
-        loginDate: Between(startDate, endDate)
+        attemptDate: Between(startDate, endDate)
       },
     });
+  }
+
+  async getUserQuestAttemptsThisWeek(userId: number) {
+    // 오늘 날짜 기준
+    const today = new Date();
+
+    // 요일 (0 = 일요일, 1 = 월요일, ..., 6 = 토요일)
+    const day = today.getDay();
+
+    // 이번 주 월요일
+    const thisWeekMon = new Date(today);
+    thisWeekMon.setDate(today.getDate() - (day === 0 ? 6 : day - 1));
+    thisWeekMon.setHours(0, 0, 0, 0);
+
+    // 이번 주 일요일
+    const thisWeekSun = new Date(thisWeekMon);
+    thisWeekSun.setDate(thisWeekMon.getDate() + 6);
+    thisWeekSun.setHours(23, 59, 59, 999);
+
+    return this.userQuestAttemptRepository.find({
+      where: {
+        userId: userId,
+        loginDate: Between(thisWeekMon, thisWeekSun)
+      },
+    });
+  }
+
+  async getUserAiFeedback(userId: number, userQuestAttemptId: number) {
+    const aiFeedback = this.aiFeedbackRepository.findOne({
+      where: {
+        userQuestAttemptId: userQuestAttemptId,
+        userQuestAttempt: {
+          userId: userId
+        }
+      },
+      relations: {
+        userQuestAttempt: true,
+      },
+      order: {
+        createdAt: 'DESC'
+      }
+    });
+
+    return aiFeedback;
+  }
+
+  async getUserAiFeedbacks(userId: number, year: number, month: number) {
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 1);
+
+    const aiFeedbacks = this.aiFeedbackRepository.find({
+      where: {
+        createdAt: Between(startDate, endDate),
+        userQuestAttempt: {
+          userId: userId
+        }
+      },
+      relations: {
+        userQuestAttempt: true,
+      },
+    });
+
+    return aiFeedbacks;
   }
 }
