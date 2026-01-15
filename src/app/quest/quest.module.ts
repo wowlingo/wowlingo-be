@@ -7,6 +7,7 @@ import { UserQuest } from '../user-quest/entities/user-quest.entity';
 import { UserQuestItem } from '../user-quest/entities/user-quest-item.entity';
 import { UserQuestProgress } from '../user-quest/entities/user-quest-progress.entity';
 import { Hashtag } from '../hashtag/entities/hashtag.entity';
+import { QuestHashtag } from '../hashtag/entities/quest-hashtag.entity';
 import { QuestItemUnitHashtag } from '../hashtag/entities/quest-item-unit-hashtag.entity';
 import { QuestService } from './quest.service';
 import { QuestController } from './quest.controller';
@@ -23,6 +24,7 @@ import { HashtagModule } from '../hashtag/hashtag.module';
       UserQuestItem,
       UserQuestProgress,
       Hashtag,
+      QuestHashtag,
       QuestItemUnitHashtag,
     ]),
     HashtagModule,

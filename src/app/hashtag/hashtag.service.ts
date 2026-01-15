@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Hashtag } from './entities/hashtag.entity';
 import { QuestHashtag } from './entities/quest-hashtag.entity';
 import { QuestItemUnitHashtag } from './entities/quest-item-unit-hashtag.entity';
 import { VocabHashtag } from './entities/vocab-hashtag.entity';
+import { CreateHashtagDto } from './dto/create-hashtag.dto';
 
 
 @Injectable()
@@ -128,6 +129,36 @@ export class HashtagService {
             hashtagMap.set(hashtag.quest_id, hashtag.names);
         }
         return hashtagMap;
+    }
+
+    /**
+     * 새로운 해시태그 생성
+     */
+    async create(dto: CreateHashtagDto): Promise<Hashtag> {
+        // code 중복 체크
+        const existingByCode = await this.hashtagRepository.findOne({
+            where: { code: dto.code },
+        });
+
+        if (existingByCode) {
+            throw new ConflictException(`이미 존재하는 해시태그 코드입니다: ${dto.code}`);
+        }
+
+        // name 중복 체크
+        const existingByName = await this.hashtagRepository.findOne({
+            where: { name: dto.name },
+        });
+
+        if (existingByName) {
+            throw new ConflictException(`이미 존재하는 해시태그 이름입니다: ${dto.name}`);
+        }
+
+        const hashtag = this.hashtagRepository.create({
+            code: dto.code,
+            name: dto.name,
+        });
+
+        return this.hashtagRepository.save(hashtag);
     }
 
 }

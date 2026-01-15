@@ -14,6 +14,8 @@ import { CreateQuestItemUnitDto } from './dto/create-quest-item-unit.dto';
 import { UpdateQuestItemUnitDto } from './dto/update-quest-item-unit.dto';
 import { CreateQuestItemDto } from './dto/create-quest-item.dto';
 import { UpdateQuestItemDto } from './dto/update-quest-item.dto';
+import { CreateQuestDto } from './dto/create-quest.dto';
+import { UpdateQuestDto } from './dto/update-quest.dto';
 
 
 
@@ -94,21 +96,21 @@ export class QuestAdminController {
   }
 
   @Post()
-  @ApiOperation({ summary: '새 퀘스트 생성' })
+  @ApiOperation({ summary: '새 퀘스트 생성 (with Hashtags)' })
   @ApiResponse({ status: 201, description: '퀘스트 생성 성공' })
-  async createQuest(@Body() questData: Partial<Quest>): Promise<BaseResponse<Quest>> {
-    const quest = await this.questService.createQuest(questData);
+  async createQuest(@Body() dto: CreateQuestDto): Promise<BaseResponse<Quest>> {
+    const quest = await this.questService.createQuestWithHashtags(dto);
     return BaseResponse.success(quest, '퀘스트가 성공적으로 생성되었습니다.');
   }
 
   @Put(':id')
-  @ApiOperation({ summary: '코스 정보 수정' })
+  @ApiOperation({ summary: '코스 정보 수정 (with Hashtags)' })
   @ApiResponse({ status: 200, description: '코스 정보 수정 성공' })
   async updateQuest(
     @Param('id', ParseIntPipe) id: number,
-    @Body() questData: Partial<Quest>,
+    @Body() dto: UpdateQuestDto,
   ): Promise<BaseResponse<Quest>> {
-    const quest = await this.questService.updateQuest(id, questData);
+    const quest = await this.questService.updateQuestWithHashtags(id, dto);
     return BaseResponse.success(quest, '코스 정보가 성공적으로 수정되었습니다.');
   }
 

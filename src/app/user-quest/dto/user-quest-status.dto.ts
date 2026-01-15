@@ -29,11 +29,17 @@ export class UserQuestStatusDto {
   @ApiProperty({ description: '퀘스트 시작 여부', example: true })
   isStarted: boolean;
 
+  @ApiProperty({ description: '퀘스트 사용가능 여부', example: true })
+  isEnable: boolean;
+
   @ApiProperty({ description: '정답률 (%)', example: 85.7 })
   accuracyRate: number;
 
   @ApiProperty({ description: '진행률 (%)', example: 17.1 })
   progressRate: number;
+
+  @ApiProperty({ description: '열매 타입' })
+  fruit: FruitType;
 }
 
 export class UserQuestListResponseDto {

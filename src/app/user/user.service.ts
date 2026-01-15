@@ -96,7 +96,7 @@ export class UserService {
     return this.userQuestAttemptRepository.find({
       where: {
         userId: userId,
-        loginDate: Between(startDate, endDate)
+        attemptDate: Between(startDate, endDate)
       },
     });
   }
