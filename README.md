@@ -291,3 +291,123 @@ npm run seed           # 데이터 시딩
   <br/>
   <img src="./src/assets/TF!_Logo_B1.png" alt="테크포임팩트 로고" width="200"/>
 </div>
+
+## 서버 세팅 방법 (Docker → 네이티브 서버 이관 가이드)
+네이티브 서버가 아래와 같이 설치 되었다고 가정하고 진행한다.
+
+### 1. 서버 설치
+- Mariadb
+- Apache2
+- openJDK-17
+- Node 20 LTS
+- npm 10.8.2 , pm2
+- Web Folder: /var/www/ 아래에 위치 할 것.
+
+
+### 2. 기존 데이터 마이그레이션 (MySQL → MariaDB)
+2-1. 기존 서버에서
+```bash
+docker exec wowlingo_mysql mysqldump -u root -p wowlingo > wowlingo_dump.sql
+```
+
+2-2. 새 서버로 전송
+```bash
+scp -i {pem 키} wowlingo_dump.sql audadm@{서버 ip}:~/
+```
+
+### 3. 애플리케이션 배포
+3-1. 디렉토리 구조 생성
+```bash
+sudo mkdir -p /var/www/wowlingo/be
+sudo mkdir -p /var/www/wowlingo/be/sounds
+sudo chown -R audadm:audadm /var/www/wowlingo
+```
+
+3-2. 소스코드 추출
+( 기존 서버 Docker에서 소스코드를 추출해도 되고, 직접 소스에서 빌드 후 작업해도 된다. 본인은 직접 소스에서 빌드 후 작업하였다.)
+```bash
+npm run build
+
+# tar 압축
+tar -cvf dist.tar ./dist
+tar -cvf node_modules.tar ./node_modules
+```
+
+3-3. 새 서버로 빌드 파일 전송
+```bash
+sftp -i {pem파일} {접근 가능 user}@{새 서버 ip}
+put dist.tar
+put node_modules.tar
+put package*.json
+```
+
+3-4. 새 서버에서 소스 배포
+```bash
+# tar 압축 해제
+tar -xvf dist.tar /var/www/wowlingo/be/
+tar -xvf node_modules.tar /var/www/wowlingo/be/
+mv package*.json /var/www/wowlingo/be/
+
+# 권한 설정이 아직 되어 있지 않다면.
+sudo chown -R audadm:audadm /var/www/wowlingo/be
+```
+
+
+### 4. 애플리케이션 실행
+```bash
+cd /var/www/wowlingo/be
+
+# .env 파일 생성 (기존 .env.development 기반으로 수정)
+cat > .env << 'EOF'
+# Database Configuration
+DB_HOST=localhost
+DB_PORT=3306
+DB_USERNAME={DB user}
+DB_PASSWORD={DB password}
+DB_DATABASE=wowlingo
+
+# Application Configuration
+NODE_ENV=production
+PORT=3000
+EOF
+
+# pm2 실행.
+pm2 start dist/main.js --name "wowlingo-be" --env production
+pm2 save
+```
+
+
+### 5. API 리버스 프록시 (포트 3000)
+참고: BE가 이미 3000 포트에서 직접 돌고 있으므로, 클라이언트가 직접 3000에 접근한다면 Apache 프록시 없이 방화벽만 열어도 됩니다.
+```bash
+sudo tee /etc/apache2/sites-available/wowlingo-be.conf << 'EOF'
+<VirtualHost *:3000>
+    ServerName 3.35.233.11
+
+    ProxyPreserveHost On
+    ProxyPass / http://127.0.0.1:3000/
+    ProxyPassReverse / http://127.0.0.1:3000/
+</VirtualHost>
+EOF
+```
+
+### 6. 사이트 활성화 및 재시작
+```bash
+sudo a2dissite 000-default.conf  # 기본 사이트 비활성화
+sudo apache2ctl configtest
+sudo systemctl restart apache2
+```
+
+### 7. 방화벽 설정
+```bash
+sudo ufw allow 22/tcp
+sudo ufw allow 80/tcp
+sudo ufw allow 3000/tcp   # BE API
+sudo ufw enable
+```
+
+### 7. 확인
+```bash
+curl http://localhost:3000
+pm2 logs wowlingo-be
+```
