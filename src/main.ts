@@ -21,8 +21,15 @@ async function bootstrap() {
         'http://54.180.139.219:3000',
         'http://54.180.139.219:8080',
         'http://54.180.139.219:8090',
+        'http://3.35.233.11:3000',
+        'http://3.35.233.11:8080',
+        'http://3.35.233.11:8090',
       ];
 
+      if (!origin) {
+        return callback(null, true);
+      }
+      
       if (origin && allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
